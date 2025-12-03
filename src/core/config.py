@@ -56,6 +56,7 @@ class AlertConfig:
     # Scheduling
     schedule_frequency_hours: float
     schedule_times: Optional[List[str]] # Daily run times in HH:MM format
+    schedule_times_timezone: str
     timezone: str
 
     # Alert-specific configurations
@@ -146,7 +147,8 @@ class AlertConfig:
             # Scheduling
             schedule_frequency_hours=cls._parse_frequency_hours(),
             schedule_times=cls._parse_schedule_times(),
-            timezone=config('TIMEZONE', default='Europe/Athens'),
+            schedule_times_timezone=config('SCHEDULE_TIMES_TIMEZONE', default='Europe/Athens'),
+            timezone=config('TIMEZONE', default='UTC'),
 
             # Tracking - if None or empty, never resend (track "forever")
             reminder_frequency_days=config('REMINDER_FREQUENCY_DAYS', default=None, cast=lambda x: float(x) if x and x.strip() else None),

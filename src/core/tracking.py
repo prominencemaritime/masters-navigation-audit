@@ -28,18 +28,18 @@ class EventTracker:
     reminder frequency setting.
     """
 
-    def __init__(self, tracking_file: Path, reminder_frequency_days: Optional[float], timezone: str):
+    def __init__(self, tracking_file: Path, reminder_frequency_days: Optional[float], schedule_times_timezone: str):
         """
         Initialize event tracker.
 
         Args:
             tracking_file: Path to JSON file for persistent storage
             reminder_frequency_days: Days after which to allow re-sending (None = never resend)
-            timezone: Timezone for timestamps
+            schedule_times_timezone: Timezone for timestamps
         """
         self.tracking_file = tracking_file
         self.reminder_frequency_days = reminder_frequency_days
-        self.timezone = ZoneInfo(timezone)
+        self.schedule_times_timezone = ZoneInfo(schedule_times_timezone)
         self.sent_events: Dict[str, str] = {}  # key -> timestamp
 
         # Load existing tracking data
@@ -65,7 +65,7 @@ class EventTracker:
             # Backward compatibility: convert old list format
             if not sent_events_data and 'sent_event_ids' in data:
                 logger.info("Converting old tracking format to new format")
-                current_time = datetime.now(tz=self.timezone).isoformat()
+                current_time = datetime.now(tz=self.schedule_times_timezone).isoformat()
                 sent_events_data = {
                     str(event_id): current_time
                     for event_id in data['sent_event_ids']
@@ -76,7 +76,7 @@ class EventTracker:
             # Filter out events older than reminder frequency (if reminder frequency is set)
             if self.reminder_frequency_days is not None:
                 # Reminder mode: clean up old events
-                cutoff_date = datetime.now(tz=self.timezone) - timedelta(days=self.reminder_frequency_days)
+                cutoff_date = datetime.now(tz=self.schedule_times_timezone) - timedelta(days=self.reminder_frequency_days)
                 filtered_events = {}
                 removed_count = 0
                 
@@ -135,7 +135,7 @@ class EventTracker:
         try:
             data = {
                 'sent_events': self.sent_events,
-                'last_updated': datetime.now(tz=self.timezone).isoformat()
+                'last_updated': datetime.now(tz=self.schedule_times_timezone).isoformat()
             }
 
             # Write to temporary file first

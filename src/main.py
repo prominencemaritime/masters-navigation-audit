@@ -78,7 +78,7 @@ def initialize_components(config: AlertConfig) -> AlertConfig:
     config.tracker = EventTracker(
         tracking_file=config.sent_events_file,
         reminder_frequency_days=config.reminder_frequency_days,
-        timezone=config.timezone
+        schedule_times_timezone=config.schedule_times_timezone
     )
     logger.info(f"[OK] Event tracker initialised")
     
@@ -209,6 +209,7 @@ def main():
         scheduler = AlertScheduler(
             frequency_hours=config.schedule_frequency_hours,
             timezone=config.timezone,
+            schedule_times_timezone=config.schedule_times_timezone,
             schedule_times=config.schedule_times
         )
         

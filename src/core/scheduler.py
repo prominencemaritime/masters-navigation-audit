@@ -23,7 +23,7 @@ class AlertScheduler:
     Supports graceful shutdown, multiple alerts, and error recovery.
     """
     
-    def __init__(self, frequency_hours: float, timezone: str, schedule_times: List[str] = None):
+    def __init__(self, frequency_hours: float, timezone: str, schedule_times_timezone: str = 'Europe/Athens', schedule_times: List[str] = None):
         """
         Initialize scheduler.
         
@@ -34,6 +34,7 @@ class AlertScheduler:
         """
         self.frequency_hours = frequency_hours
         self.schedule_times = schedule_times
+        self.schedule_times_timezone = ZoneInfo(schedule_times_timezone)
         self.timezone = ZoneInfo(timezone)
         self.shutdown_event = threading.Event()
         self._alerts: List[Callable] = []
@@ -107,14 +108,13 @@ class AlertScheduler:
         # Check if any scheduled time is still upcoming today
         for scheduled_time in schedule_times_parsed:
             if scheduled_time > current_time_only:
-                next_run = datetime.combine(current_date, scheduled_time)
-                return next_run.replace(tzinfo=self.timezone)
+                next_run = datetime.combine(current_date, scheduled_time, tzinfo=self.schedule_times_timezone)
+                return next_run
 
         # No more runs today, take first time tomorrow
         next_date = current_date + timedelta(days=1)
-        next_run = datetime.combine(next_date, schedule_times_parsed[0])
-        return next_run.replace(tzinfo=self.timezone)
-
+        next_run = datetime.combine(next_date, schedule_times_parsed[0], tzinfo=self.schedule_times_timezone)
+        return next_run
 
     def run_once(self) -> None:
         """
@@ -142,7 +142,7 @@ class AlertScheduler:
         logger.info("=" * 60)
         logger.info(f"▶ SCHEDULER STARTED")
         logger.info(f"Frequency: Every {duration_hours(self.frequency_hours)}")
-        logger.info(f"Timezone: {self.timezone}")
+        logger.info(f"Scheduling Timezone: {self.schedule_times_timezone}")
         logger.info(f"Registered alerts: {len(self._alerts)}")
         logger.info("=" * 60)
         
@@ -157,7 +157,7 @@ class AlertScheduler:
                 
                 # Calculate next run time
                 sleep_seconds = self.frequency_hours * 3600
-                next_run = datetime.now(tz=self.timezone) + timedelta(hours=self.frequency_hours)
+                next_run = datetime.now(tz=self.schedule_times_timezone) + timedelta(hours=self.frequency_hours)
                 
                 logger.info(f"Sleeping for {duration_hours(self.frequency_hours)}")
                 logger.info(f"Next run scheduled at: {next_run.strftime('%Y-%m-%d %H:%M:%S %Z')}")
@@ -189,22 +189,25 @@ class AlertScheduler:
         """
         Run alerts at specified times each day.
         
-        Uses schedule_times to determine when to run alerts.
+        Uses schedule_times (and schedule_times_timezone) to determine when to run alerts.
         Handles graceful shutdown and error recovery.
         """
         if not self.schedule_times:
             raise ValueError("schedule_times must be configured for time-based scheduling")
+
+        if not self.schedule_times_timezone:
+            raise ValueError("self.schedule_times_timezone must be configued for time-based scheduling")
         
         logger.info("=" * 60)
         logger.info(f"▶ TIME-BASED SCHEDULER STARTED")
         logger.info(f"Daily run times: {', '.join(self.schedule_times)}")
-        logger.info(f"Timezone: {self.timezone}")
+        logger.info(f"Timezone: {self.schedule_times_timezone}")
         logger.info(f"Registered alerts: {len(self._alerts)}")
         logger.info("=" * 60)
         
         while not self.shutdown_event.is_set():
             try:
-                current_time = datetime.now(tz=self.timezone)
+                current_time = datetime.now(tz=self.schedule_times_timezone)
                 next_run = self._calculate_next_run_time(current_time)
                 
                 # Calculate sleep duration
