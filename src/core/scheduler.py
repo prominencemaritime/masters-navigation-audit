@@ -8,7 +8,7 @@ import signal
 import threading
 import logging
 from datetime import datetime, timedelta, time
-from src.formatters.date_formatter import duration
+from src.formatters.date_formatter import duration_hours
 from zoneinfo import ZoneInfo
 from typing import Callable, List
 import pandas as pd
@@ -141,7 +141,7 @@ class AlertScheduler:
         """
         logger.info("=" * 60)
         logger.info(f"▶ SCHEDULER STARTED")
-        logger.info(f"Frequency: Every {duration(self.frequency_hours)}")
+        logger.info(f"Frequency: Every {duration_hours(self.frequency_hours)}")
         logger.info(f"Timezone: {self.timezone}")
         logger.info(f"Registered alerts: {len(self._alerts)}")
         logger.info("=" * 60)
@@ -159,7 +159,7 @@ class AlertScheduler:
                 sleep_seconds = self.frequency_hours * 3600
                 next_run = datetime.now(tz=self.timezone) + timedelta(hours=self.frequency_hours)
                 
-                logger.info(f"Sleeping for {duration(self.frequency_hours)}")
+                logger.info(f"Sleeping for {duration_hours(self.frequency_hours)}")
                 logger.info(f"Next run scheduled at: {next_run.strftime('%Y-%m-%d %H:%M:%S %Z')}")
                 
                 # Use shutdown_event.wait() for interruptible sleep

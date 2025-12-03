@@ -8,7 +8,7 @@ and responsive design.
 from typing import Dict, Optional
 import pandas as pd
 from datetime import datetime
-from src.formatters.date_formatter import duration
+from src.formatters.date_formatter import duration_hours
 import logging
 
 logger = logging.getLogger(__name__)
@@ -97,6 +97,7 @@ class HTMLFormatter:
         logos_html = self._build_logos_html(config)
         
         # Build the HTML
+        # -apple-system, BlinkMacSystemFont
         html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -104,7 +105,8 @@ class HTMLFormatter:
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
     body {{
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+        font-family: Tahoma, Verdana, "Segoe UI", Roboto, Arial, sans-serif;
+        font-size: 13px;
         background-color: #f9fafc;
         color: #333;
         line-height: 1.6;
@@ -190,7 +192,8 @@ class HTMLFormatter:
         min-width: 600px;
         border-collapse: collapse;
         margin: 20px 0;
-        font-size: 14px;
+        font-size: 13px;
+        font-family: Tahoma, Verdana, "Segoe UI", Roboto, Arial, sans-serif;
         box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }}
     th {{
@@ -238,6 +241,37 @@ class HTMLFormatter:
         color: #666;
         font-size: 16px;
     }}
+    @media only screen and (max-width: 1200px) {{
+        .container {{
+            width: 98%;
+            margin: 10px auto;
+            border-radius: 8px;
+        }}
+        .header {{
+            flex-direction: column;
+            text-align: center;
+            padding: 15px;
+        }}
+        .header-text {{
+            text-align: center;
+            margin-top: 15px;
+        }}
+        .content {{
+            padding: 15px;
+        }}
+        body {{
+            font-size: 13px
+        }}
+        table {{
+            font-size: 13px;
+            min-width: 500px;
+        }}
+        th, td {{
+            padding: 8px;
+            min-width: 60px;
+            font-size: 13px;
+        }}
+    }}
     @media only screen and (max-width: 768px) {{
         .container {{
             width: 98%;
@@ -256,6 +290,9 @@ class HTMLFormatter:
         .content {{
             padding: 15px;
         }}
+        body {{
+            font-size: 12px
+        }}
         table {{
             font-size: 13px;
             min-width: 500px;
@@ -271,6 +308,9 @@ class HTMLFormatter:
             width: 100%;
             margin: 0;
             border-radius: 0;
+        }}
+        body {{
+            font-size: 11px;
         }}
         table {{
             min-width: 400px;
@@ -317,11 +357,11 @@ class HTMLFormatter:
             </div>
             <div class="metadata-row">
                 <span class="metadata-label">Lookback:</span>
-                {duration(config.lookback_days * 24)} (to created at)
+                {duration_hours(config.lookback_days * 24)} (to created at)
             </div>
             <div class="metadata-row">
                 <span class="metadata-label">Schedule Frequency:</span>
-                {duration(config.schedule_frequency_hours)}
+                {duration_hours(config.schedule_frequency_hours)}
             </div>
             <div class="metadata-row">
                 <span class="metadata-label">Records Found:</span>
@@ -336,7 +376,9 @@ class HTMLFormatter:
                 html += f"""
         <div style="background-color: #fff; padding: 20px; border-left: 4px solid #2EA9DE; margin-bottom: 25px; line-height: 1.8;">
             <p style="margin: 0 0 10px 0;">Dear Captain {captain_surname},</p>
-            <p style="margin: 10px 0;">Welcome onboard. The forms 'F.NAV.13 – Master's Navigation Audit' & 'F.MLC.1 - Master's MLC Inspection', along with the current Crew List, must be uploaded within 14 days of assuming command. Please create <strong>two Events</strong> using the Templates 'Master's Navigation Audit' & 'Master's MLC Inspection'.</p>
+            <p style="margin: 10px 0;">Welcome onboard.</p> 
+            <p style="margin: 10px 0;">The forms 'F.NAV.13 – Master's Navigation Audit' & 'F.MLC.1 - Master's MLC Inspection', along with the current Crew List, must be uploaded within 14 days of assuming command.</p>
+            <p style="margin: 10px 0;">Please create <strong>two Events</strong> using the Templates 'Master's Navigation Audit' & 'Master's MLC Inspection'.</p>
         </div>
 """
 

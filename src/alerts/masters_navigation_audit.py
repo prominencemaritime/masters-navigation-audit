@@ -92,7 +92,7 @@ class MastersNavigationAuditAlert(BaseAlert):
         df['sign_on_date'] = pd.to_datetime(df['sign_on_date'])
 
         # If the datetime is timezone-naive, localise it to UTC first, then convert to timezone specified in .env 
-        # I am assuming all times appearing are UTC, and then converting to TIMEZONE='Europe/Athens' will automatically be correct during Winter (UTC+2) and Summer (UTC+3).
+        # I am assuming all times appearing are UTC, and then, e.g., converting to TIMEZONE='Europe/Athens' will automatically be correct during Winter (UTC+2) and Summer (UTC+3). Alternatively, TIMEZONE=UTC in .env will also work, and this just preserves UTC as the timezone of interest.
         if df['sign_on_date'].dt.tz is None:
             df['sign_on_date'] = df['sign_on_date'].dt.tz_localize('UTC').dt.tz_convert(self.config.timezone)
         else:
@@ -294,7 +294,7 @@ class MastersNavigationAuditAlert(BaseAlert):
             crew_contract_id = row['crew_contract_id']
             crew_member_id = row['crew_member_id']
 
-            return f"vessel_{vessel.lower()}__crew_contract_id_{crew_contract_id}__crew_member_id_{crew_member_id}"
+            return f"{vessel.lower()}__crew_contract_id_{crew_contract_id}__crew_member_id_{crew_member_id}"
 
         except KeyError as e:
             self.logger.error(f"Missing column in row for tracking key: {e}")

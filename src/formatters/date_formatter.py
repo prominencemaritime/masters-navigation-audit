@@ -3,7 +3,7 @@ from datetime import datetime
 import pandas as pd
 
 
-def duration(hours: float) -> str:
+def duration_hours(hours: float) -> str:
     td = pd.Timedelta(hours=hours).components
 
     parts = []

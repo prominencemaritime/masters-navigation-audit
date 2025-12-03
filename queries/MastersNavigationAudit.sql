@@ -35,4 +35,7 @@ WHERE
 	p.type = 'crew'
 	AND v.active = 'true'
 	AND cc.rank_id = :rank_id --'1'
-	AND cc.sign_on_date_as_per_office >= NOW() - INTERVAL '1 day' * :lookback_days;
+	AND cc.sign_on_date_as_per_office >= NOW() - INTERVAL '1 day' * :lookback_days
+    AND NOW() >= cc.sign_on_date_as_per_office + INTERVAL '1 day'
+ORDER BY
+    cc.sign_on_date_as_per_office DESC;
