@@ -59,11 +59,19 @@ def test_tracker_loads_existing_data(temp_dir):
     tracking_file = temp_dir / 'tracking.json'
 
     # Create initial tracker and save data
-    tracker1 = EventTracker(tracking_file, None, 'Europe/Athens')
+    tracker1 = EventTracker(
+        tracking_file=tracking_file,
+        reminder_frequency_days=None,
+        schedule_times_timezone='Europe/Athens'
+    )
     tracker1.mark_as_sent({'event_1'}, datetime.now())
 
     # Create new tracker instance (should load existing data)
-    tracker2 = EventTracker(tracking_file, None, 'Europe/Athens')
+    tracker2 = EventTracker(
+        tracking_file=tracking_file,
+        reminder_frequency_days=None,
+        schedule_times_timezone='Europe/Athens'
+    )
 
     assert tracker2.is_sent('event_1') is True
 
@@ -76,7 +84,11 @@ def test_tracker_cleans_old_events_with_reminder_frequency(temp_dir):
     tracking_file = temp_dir / 'tracking.json'
 
     # Create tracker with 7-day reminder frequency
-    tracker = EventTracker(tracking_file, 7.0, 'Europe/Athens')
+    tracker = EventTracker(
+        tracking_file=tracking_file,
+        reminder_frequency_days=7.0,
+        schedule_times_timezone='Europe/Athens'
+    )
 
     # Use timezone-aware datetimes (required by tracker)
     import zoneinfo
@@ -93,7 +105,11 @@ def test_tracker_cleans_old_events_with_reminder_frequency(temp_dir):
     tracker._save()
 
     # Reload (should clean up old event)
-    tracker2 = EventTracker(tracking_file, 7.0, 'Europe/Athens')
+    tracker2 = EventTracker(
+        tracking_file=tracking_file,
+        reminder_frequency_days=7.0,
+        schedule_times_timezone='Europe/Athens'
+    )
 
     assert 'recent_event' in tracker2.sent_events
     assert 'old_event' not in tracker2.sent_events
@@ -108,7 +124,12 @@ def test_tracker_keeps_all_events_with_no_reminder_frequency(temp_dir):
     tz = zoneinfo.ZoneInfo('Europe/Athens')
 
     # Create tracker with no reminder frequency
-    tracker = EventTracker(tracking_file, None, 'Europe/Athens')
+    tracker = EventTracker(
+        tracking_file=tracking_file,
+        reminder_frequency_days=None,
+        schedule_times_timezone='Europe/Athens'
+    )
+
 
     # Add very old event (100 days ago) - with timezone
     old_time = datetime.now(tz=tz) - timedelta(days=100)
@@ -116,6 +137,11 @@ def test_tracker_keeps_all_events_with_no_reminder_frequency(temp_dir):
     tracker._save()
 
     # Reload (should keep old event)
-    tracker2 = EventTracker(tracking_file, None, 'Europe/Athens')
+    tracker2 = EventTracker(
+        tracking_file=tracking_file,
+        reminder_frequency_days=None,
+        schedule_times_timezone='Europe/Athens'
+    )
+
 
     assert 'very_old_event' in tracker2.sent_events

@@ -182,7 +182,8 @@ class MastersNavigationAuditAlert(BaseAlert):
             # Add URLs to dataframe if ENABLE_LINKS
             if self.config.enable_links:
                 vessel_df = vessel_df.copy()
-                vessel_df['url'] = vessel_df['job_id'].apply(
+                # Masters Navigation Audit doesn't use job_id - use crew_contract_id for URLs
+                vessel_df['url'] = vessel_df['crew_contract_id'].apply(
                         self._get_url_links
                 )
 

@@ -13,7 +13,7 @@ from unittest.mock import Mock, MagicMock
 from src.core.config import AlertConfig
 from src.core.tracking import EventTracker
 from src.core.scheduler import AlertScheduler
-from src.alerts.flag_dispensations_alert import FlagDispensationsAlert
+from src.alerts.masters_navigation_audit import MastersNavigationAuditAlert
 
 
 @pytest.fixture
@@ -51,10 +51,10 @@ def mock_config(temp_dir, monkeypatch):
     monkeypatch.setenv('REMINDER_FREQUENCY_DAYS', '')  # None
     
     monkeypatch.setenv('BASE_URL', 'https://test.orca.tools')
-    monkeypatch.setenv('LOOKBACK_DAYS', '1')
-    monkeypatch.setenv('JOB_STATUS', 'for_approval')
+    monkeypatch.setenv('LOOKBACK_DAYS', '4')
+    monkeypatch.setenv('RANK_ID', '1')
     monkeypatch.setenv('ENABLE_LINKS', 'True')
-    monkeypatch.setenv('URL_PATH', '/jobs/flag-extension-dispensation')
+    monkeypatch.setenv('URL_PATH', '/events')
     
     monkeypatch.setenv('DRY_RUN_EMAIL', '')
     
@@ -72,45 +72,33 @@ def mock_config(temp_dir, monkeypatch):
 
 @pytest.fixture
 def sample_dataframe():
-    """Create sample flag dispensations DataFrame with correct schema."""
+    """Create sample Masters Navigation Audit DataFrame with correct schema."""
     data = {
-        'vessel_id': [101, 101, 102, 103],
-        'vessel': ['KNOSSOS', 'KNOSSOS', 'MINI', 'NONDAS'],
+        'crew_contract_id': [48941, 48942, 48943, 48944],
+        'crew_member_id': [201, 202, 203, 204],
+        'vessel_id': [1, 1, 2, 2],
+        'vessel': ['VESSEL', 'VESSEL', 'OTHER VESSEL', 'OTHER VESSEL'],
         'vsl_email': [
-            'knossos@vsl.prominencemaritime.com',
-            'knossos@vsl.prominencemaritime.com',
-            'mini@vsl.prominencemaritime.com',
-            'nondas@vsl.prominencemaritime.com'
+            'test@prominencemaritime.com',
+            'test@prominencemaritime.com',
+            'test2@seatraders.com',
+            'test2@seatraders.com'
         ],
-        'job_id': [501, 502, 503, 504],
-        'importance': ['High', 'Medium', 'High', 'Low'],
-        'title': [
-            'Flag Extension Request - Greece',
-            'Flag Dispensation - Safety Equipment',
-            'Flag Extension - Crew Certification',
-            'Flag Dispensation - Annual Survey'
+        'surname': ['Smith', 'Jones', 'Brown', 'Wilson'],
+        'full_name': ['John Smith', 'Jane Jones', 'Bob Brown', 'Alice Wilson'],
+        'rank': ['Captain', 'Captain', 'Captain', 'Captain'],
+        'sign_on_date': [
+            datetime.now() - timedelta(days=1),
+            datetime.now() - timedelta(days=2),
+            datetime.now() - timedelta(hours=12),
+            datetime.now() - timedelta(hours=6)
         ],
-        'dispensation_type': ['Extension', 'Dispensation', 'Extension', 'Dispensation'],
-        'department': ['Deck', 'Safety', 'Crew', 'Technical'],
         'due_date': [
-            '2025-12-15',
-            '2025-12-20',
-            '2025-12-10',
-            '2025-12-25'
-        ],
-        'requested_on': [
-            '2025-11-01',
-            '2025-11-15',
-            '2025-11-20',
-            '2025-11-25'
-        ],
-        'created_at': [
-            datetime.now() - timedelta(hours=1),
-            datetime.now() - timedelta(hours=2),
-            datetime.now() - timedelta(hours=3),
-            datetime.now() - timedelta(hours=4)
-        ],
-        'status': ['for_approval', 'for_approval', 'for_approval', 'for_approval']
+            (datetime.now() - timedelta(days=1) + timedelta(days=14)).date(),
+            (datetime.now() - timedelta(days=2) + timedelta(days=14)).date(),
+            (datetime.now() - timedelta(hours=12) + timedelta(days=14)).date(),
+            (datetime.now() - timedelta(hours=6) + timedelta(days=14)).date()
+        ]
     }
     return pd.DataFrame(data)
 
@@ -130,7 +118,7 @@ def mock_event_tracker(temp_dir):
     tracker = EventTracker(
         tracking_file=tracking_file,
         reminder_frequency_days=None,
-        timezone='Europe/Athens'
+        schedule_times_timezone='Europe/Athens'
     )
     return tracker
 
