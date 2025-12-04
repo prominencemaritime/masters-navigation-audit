@@ -292,10 +292,11 @@ class MastersNavigationAuditAlert(BaseAlert):
         """
         try:
             vessel = row['vessel']
+            vessel = "_".join(vessel.lower().split(' '))
             crew_contract_id = row['crew_contract_id']
             crew_member_id = row['crew_member_id']
 
-            return f"{vessel.lower()}__crew_contract_id_{crew_contract_id}__crew_member_id_{crew_member_id}"
+            return f"{vessel}__crew_contract_id_{crew_contract_id}__crew_member_id_{crew_member_id}"
 
         except KeyError as e:
             self.logger.error(f"Missing column in row for tracking key: {e}")
@@ -314,7 +315,7 @@ class MastersNavigationAuditAlert(BaseAlert):
         Returns:
             Email subject string
         """
-        vessel = metadata.get('vessel', 'Vessel')
+        vessel = metadata.get('vessel_name', 'Vessel')
         return f"AlertDev | {vessel.upper()} Master's Navigation Audit"
 
 

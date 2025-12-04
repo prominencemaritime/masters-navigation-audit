@@ -90,7 +90,7 @@ class HTMLFormatter:
         
         # Extract metadata with defaults
         alert_title = metadata.get('alert_title', 'Alert Notification')
-        vessel_name = metadata.get('vessel_name', '')
+        vessel_name = metadata.get('vessel_name', 'vessel')
         company_name = metadata.get('company_name', 'Prominence Maritime S.A.')
         
         # Determine which logos are available
