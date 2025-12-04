@@ -1,11 +1,8 @@
-Here's the complete updated README.md for your Flag Dispensations Alert System:
+# Master's Navigation Audit Alert System
 
-```markdown
-# Flag Dispensations Alert System
+A modular, production-ready alert system for monitoring new Master sign-ons and sending automated email notifications for required navigation audits. Built with a plugin-based architecture that makes it easy to create new alert types by copying and customizing the project.
 
-A modular, production-ready alert system for monitoring flag extension and dispensation jobs and sending automated email notifications. Built with a plugin-based architecture that makes it easy to create new alert types by copying and customizing the project.
-
-## 📋 Table of Contents
+## Table of Contents
 
 - [Overview](#overview)
 - [Architecture](#architecture)
@@ -23,21 +20,28 @@ A modular, production-ready alert system for monitoring flag extension and dispe
 
 ---
 
-## 🎯 Overview
+## Overview
 
-This system monitors a PostgreSQL database for flag extension and dispensation jobs requiring approval and sends automated email notifications to vessel-specific recipients with company-specific CC lists. The modular architecture allows you to easily create new alert types (hot works, certifications, surveys, etc.) by copying this project and customizing the alert logic.
+This system monitors a PostgreSQL database for new Master sign-ons (rank_id=1) and sends automated email notifications reminding captains to complete their Master's Navigation Audit and Master's MLC Inspection within 14 days of assuming command. The modular architecture allows you to easily create new alert types (hot works, certifications, surveys, etc.) by copying this project and customizing the alert logic.
 
-**Current Alert Type**: Flag Dispensations
-- Monitors `job_entities` table for flag-extension-dispensation records (type='flag-extension-dispensation') in 'for_approval' status
-- Tracks jobs created in the last 24 hours (configurable)
-- Sends individual emails to each vessel with clickable links to view full job details
+**Current Alert Type**: Master's Navigation Audit
+- Monitors `crew_contracts` table for Masters (rank_id='1') who have recently signed on
+- Tracks crew contracts created in the last N days (configurable via `LOOKBACK_DAYS`)
+- Sends individual emails to each vessel with personalized captain greeting
 - Automatically determines CC recipients based on vessel email domain
 - Tracks sent notifications to prevent duplicates
 - Optional reminder system after configurable days
+- Includes clickable links to crew contract details (if enabled)
+
+**Key Requirements Reminder**:
+- Form F.NAV.13 – Master's Navigation Audit
+- Form F.MLC.1 - Master's MLC Inspection
+- Current Crew List
+- All must be uploaded within 14 days of assuming command
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ### Core Components
 ```
@@ -80,24 +84,29 @@ This system monitors a PostgreSQL database for flag extension and dispensation j
 
 ---
 
-## ✨ Features
+## Features
 
 ### Current Features
 - ✅ **Modular Architecture**: Plugin-based design for easy extensibility
 - ✅ **Email Notifications**: Rich HTML emails with company logos and responsive design
-- ✅ **Clickable Job Links**: Direct links from emails to job details in your application
+- ✅ **Personalized Messages**: Custom greeting using captain's surname
+- ✅ **Clickable Contract Links**: Direct links from emails to crew contract details (optional)
 - ✅ **Smart Routing**: Automatic CC list selection based on email domain
-- ✅ **Duplicate Prevention**: Tracks sent jobs to avoid re-sending notifications
+- ✅ **Duplicate Prevention**: Tracks sent notifications to avoid re-sending
 - ✅ **Optional Reminders**: Re-send alerts after configurable days (or never)
-- ✅ **Timezone Aware**: All datetime operations respect configured timezone
+- ✅ **Dual Timezone Support**: 
+  - `TIMEZONE` for SQL queries and data display
+  - `SCHEDULE_TIMES_TIMEZONE` for scheduler timing and event tracking
+- ✅ **Flexible Scheduling**: 
+  - Interval-based: Run every N hours (e.g., every 1 hour, 30 minutes, etc.)
+  - Time-based: Run at specific times daily (e.g., 09:00, 15:00)
 - ✅ **Dry-Run Mode**: Test without sending emails (redirects to test addresses)
-- ✅ **Command-Line Overrides**: `--dry-run` flag overrides `.env` settings
+- ✅ **Command-Line Overrides**: `--dry-run` and `--run-once` flags override `.env` settings
 - ✅ **Graceful Shutdown**: SIGTERM/SIGINT handlers for clean termination
 - ✅ **Error Recovery**: Continues running after transient failures
 - ✅ **Docker Support**: Fully containerized with docker-compose
 - ✅ **SSH Tunnel Support**: Secure remote database access
 - ✅ **Atomic File Operations**: Prevents data corruption on interruption
-- ✅ **Configurable Scheduling**: Run on any frequency (hourly, every 30 minutes, daily, etc.)
 - ✅ **Comprehensive Logging**: Rotating logs with detailed execution traces
 - ✅ **Responsive Email Design**: Adapts to desktop, tablet, and mobile screens
 
@@ -105,11 +114,10 @@ This system monitors a PostgreSQL database for flag extension and dispensation j
 - 🔜 **Microsoft Teams Integration**: Send notifications to Teams channels
 - 🔜 **Slack Integration**: Send notifications to Slack channels
 - 🔜 **Multiple Alert Types**: Hot works, certifications, surveys, etc.
-- 🔜 **Comprehensive Tests**: Update test suite for flag dispensations
 
 ---
 
-## 📋 Prerequisites
+## Prerequisites
 
 ### Required Software
 - **Python 3.13+**
@@ -123,7 +131,7 @@ See `requirements.txt` for exact versions. Key dependencies:
 
 **Core Dependencies**:
 - `python-decouple==3.8` - Environment variable management
-- `pandas==2.3.3` - Data manipulation and analysis
+- `pandas==2.2.3` - Data manipulation and analysis
 - `sqlalchemy==2.0.44` - Database ORM and connection pooling
 - `psycopg2-binary==2.9.11` - PostgreSQL adapter
 - `sshtunnel>=0.4.0,<1.0.0` - SSH tunnel for remote database access
@@ -153,15 +161,15 @@ grep -v "^#\|pytest\|freezegun" requirements.txt | pip install -r /dev/stdin
 
 ---
 
-## 🚀 Installation
+## Installation
 
 ### Docker Deployment (Recommended)
 
 1. **Clone or copy the project**:
 ```bash
    cd ~/Dev
-   git clone <repository> flag-dispensations-alerts
-   cd flag-dispensations-alerts
+   git clone <repository> masters-navigation-audit-alerts
+   cd masters-navigation-audit-alerts
 ```
 
 2. **Create `.env` file**:
@@ -205,8 +213,8 @@ grep -v "^#\|pytest\|freezegun" requirements.txt | pip install -r /dev/stdin
 1. **Clone or copy the project**:
 ```bash
    cd ~/Dev
-   git clone <repository> flag-dispensations-alerts
-   cd flag-dispensations-alerts
+   git clone <repository> masters-navigation-audit-alerts
+   cd masters-navigation-audit-alerts
 ```
 
 2. **Create virtual environment**:
@@ -235,11 +243,12 @@ grep -v "^#\|pytest\|freezegun" requirements.txt | pip install -r /dev/stdin
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 ### Environment Variables (`.env`)
 
-Create a `.env` file in the project root with the following variables:
+Create a `.env` file in the project root using the .env.example template.
+
 ```bash
 # ============================================================================
 # DATABASE CONFIGURATION
@@ -250,401 +259,506 @@ DB_NAME=your_database
 DB_USER=your_user
 DB_PASS=your_password
 
-# SSH Tunnel (set USE_SSH_TUNNEL=True if database requires SSH tunnel)
+# SSH Tunnel Configuration (optional - for remote database access)
 USE_SSH_TUNNEL=True
 SSH_HOST=your.ssh.host.com
 SSH_PORT=22
-SSH_USER=your_ssh_user
-SSH_KEY_PATH=/app/ssh_ubuntu_key
+SSH_USER=ubuntu
+SSH_KEY_PATH=/app/ssh_ubuntu_key  # Inside Docker container
+# SSH_KEY_PATH=/Users/username/.ssh/id_rsa  # For local development
 
 # ============================================================================
 # EMAIL CONFIGURATION
 # ============================================================================
-SMTP_HOST=smtp.gmail.com
+SMTP_HOST=smtp_host
 SMTP_PORT=465
 SMTP_USER=alerts@yourcompany.com
-SMTP_PASS=your_app_password
+SMTP_PASS=your_email_password
 
-# Internal recipients (always receive all notifications)
-INTERNAL_RECIPIENTS=admin@company.com,manager@company.com
+# Email Recipients (comma-separated)
+# Company-specific CC recipients (added automatically based on vessel email domain)
+PROMINENCE_EMAIL_CC_RECIPIENTS=operations@prominencemaritime.com,fleet@prominencemaritime.com
+SEATRADERS_EMAIL_CC_RECIPIENTS=operations@seatraders.com,fleet@seatraders.com
 
-# Company-specific CC recipients (applied based on vessel email domain)
-PROMINENCE_EMAIL_CC_RECIPIENTS=user1@prominencemaritime.com,user2@prominencemaritime.com
-SEATRADERS_EMAIL_CC_RECIPIENTS=user1@seatraders.com,user2@seatraders.com
-
-# ============================================================================
-# DRY-RUN / TESTING CONFIGURATION
-# ============================================================================
-# Set DRY_RUN=True to redirect ALL emails to test addresses (no real emails sent)
-# Command-line flag --dry-run overrides this setting
-DRY_RUN=False
-
-# When DRY_RUN=True, all emails are redirected to these addresses (comma-separated)
-DRY_RUN_EMAIL=test1@company.com,test2@company.com
+# Internal recipients (always CC'd on all emails)
+INTERNAL_RECIPIENTS=data@prominencemaritime.com
 
 # ============================================================================
-# FEATURE FLAGS
+# SCHEDULING CONFIGURATION
 # ============================================================================
-ENABLE_EMAIL_ALERTS=True
-ENABLE_TEAMS_ALERTS=False
-ENABLE_SPECIAL_TEAMS_EMAIL_ALERT=False
 
-# ============================================================================
-# CLICKABLE LINKS CONFIGURATION
-# ============================================================================
-# Enable clickable links in emails (title becomes clickable)
-ENABLE_LINKS=True
+# METHOD 1: Interval-based scheduling (run every N hours)
+# Set SCHEDULE_FREQUENCY_HOURS to run at regular intervals
+SCHEDULE_FREQUENCY_HOURS=1  # Run every 1 hour
 
-# Base URL for your application (e.g., https://prominence.orca.tools)
-BASE_URL=https://prominence.orca.tools
+# METHOD 2: Time-based scheduling (run at specific times daily)
+# Set SCHEDULE_TIMES to run at specific times (comma-separated, 24-hour format)
+# If both are set, SCHEDULE_TIMES takes precedence
+# SCHEDULE_TIMES=09:00,15:00,21:00  # Run at 9 AM, 3 PM, and 9 PM daily
 
-# URL path to flag dispensations page (e.g., /jobs/flag-extension-dispensation)
-# Full URL will be: {BASE_URL}{URL_PATH}/{job_id}
-# Example: https://prominence.orca.tools/jobs/flag-extension-dispensation/12345
-URL_PATH=/jobs/flag-extension-dispensation
+# Timezone for scheduled run times and event tracking
+SCHEDULE_TIMES_TIMEZONE=Europe/Athens
 
-# ============================================================================
-# COMPANY BRANDING
-# ============================================================================
-PROMINENCE_LOGO=trans_logo_prominence_procreate_small.png
-SEATRADERS_LOGO=trans_logo_seatraders_procreate_small.png
-
-# ============================================================================
-# SCHEDULING & TRACKING
-# ============================================================================
-# How often to check for new alerts (in hours)
-# Examples: 0.5 = every 30 minutes, 1 = hourly, 24 = daily, 168 = weekly
-SCHEDULE_FREQUENCY_HOURS=1.0
-
-# Timezone for all datetime operations
+# Timezone for SQL queries and data display (timestamps in emails)
 TIMEZONE=Europe/Athens
-
-# Reminder frequency (in days)
-# - Set to a number (e.g., 30) to re-send alerts after X days
-# - Leave blank or empty to NEVER re-send (track forever, no reminders)
-REMINDER_FREQUENCY_DAYS=
-
-# File where sent jobs are tracked (relative to project root)
-SENT_EVENTS_FILE=sent_alerts.json
 
 # ============================================================================
 # ALERT-SPECIFIC CONFIGURATION
 # ============================================================================
-# How many days back to look for flag dispensation jobs
-# Jobs created within this window will be included
+
+# Lookback period: Check crew contracts created in last N days
 LOOKBACK_DAYS=1
 
-# Job status to filter for (typically 'for_approval')
-JOB_STATUS=for_approval
+# Rank ID for Masters (typically '1' for Captain/Master)
+RANK_ID=1
 
 # ============================================================================
-# LOGGING
+# TRACKING & REMINDERS
+# ============================================================================
+
+# Reminder frequency (days after which to allow re-sending same alert)
+# Set to empty or comment out to NEVER resend (track forever)
+# REMINDER_FREQUENCY_DAYS=7  # Resend after 7 days
+REMINDER_FREQUENCY_DAYS=  # Never resend (recommended for Masters Navigation Audit)
+
+# Tracking file location
+SENT_EVENTS_FILE=sent_alerts.json
+
+# ============================================================================
+# FEATURE FLAGS
+# ============================================================================
+
+# Enable/disable email notifications
+ENABLE_EMAIL_ALERTS=True
+
+# Enable/disable Microsoft Teams notifications (not yet implemented)
+ENABLE_TEAMS_ALERTS=False
+
+# Enable/disable special Teams email alert (not yet implemented)
+ENABLE_SPECIAL_TEAMS_EMAIL_ALERT=False
+SPECIAL_TEAMS_EMAIL=
+
+# ============================================================================
+# LINKS CONFIGURATION
+# ============================================================================
+
+# Enable clickable links in emails to crew contract details
+ENABLE_LINKS=True
+
+# Base URL for your application
+BASE_URL=https://prominence.orca.tools/
+
+# URL path pattern for crew contracts
+# Example: https://prominence.orca.tools/events/123
+URL_PATH=/events
+
+# ============================================================================
+# COMPANY BRANDING
+# ============================================================================
+
+# Logo file paths (relative to media/ directory)
+PROMINENCE_LOGO=trans_logo_prominence_procreate_small.png
+SEATRADERS_LOGO=trans_logo_seatraders_procreate_small.png
+
+# ============================================================================
+# LOGGING CONFIGURATION
 # ============================================================================
 LOG_FILE=alerts.log
-LOG_MAX_BYTES=10485760
+LOG_MAX_BYTES=10485760  # 10MB
 LOG_BACKUP_COUNT=5
+
+# ============================================================================
+# RUNTIME MODE
+# ============================================================================
+
+# Dry-run mode: Test without sending real emails
+# Can be overridden with --dry-run command line flag
+DRY_RUN=True
+
+# Dry-run email: Redirect all emails to this address in dry-run mode
+# If empty, no emails will be sent at all in dry-run mode
+DRY_RUN_EMAIL=test@yourcompany.com
+
+# Run-once mode: Execute once and exit (no scheduling)
+# Can be overridden with --run-once command line flag
+RUN_ONCE=False
 ```
 
 ### Configuration Notes
 
-**SSH Tunnel**:
-- Set `USE_SSH_TUNNEL=True` if your database is only accessible via SSH
-- `SSH_KEY_PATH` should point to your private SSH key file
-- In Docker, mount your SSH key as read-only: `~/.ssh/your_key:/app/ssh_ubuntu_key:ro`
+#### Scheduling Options
 
-**DRY_RUN Mode**:
-- `DRY_RUN=True` in `.env` → All emails redirected to `DRY_RUN_EMAIL` addresses
-- `--dry-run` command-line flag → Overrides `.env`, enables dry-run mode
-- **Three-layer safety**: Even with `DRY_RUN=False`, code checks prevent accidental sends
+You have two scheduling methods:
 
-**REMINDER_FREQUENCY_DAYS**:
-- **Empty/blank** → Never re-send notifications (track jobs forever)
-- **Number** (e.g., `30`) → Re-send notifications after X days
-- Jobs older than X days are removed from tracking file
+**Option 1: Interval-based (SCHEDULE_FREQUENCY_HOURS)**
+- Runs continuously at regular intervals
+- Example: `SCHEDULE_FREQUENCY_HOURS=1` runs every hour
+- Example: `SCHEDULE_FREQUENCY_HOURS=0.5` runs every 30 minutes
 
-**Clickable Links Configuration**:
-- **ENABLE_LINKS=True** → Job titles in emails become clickable links
-- **BASE_URL** → Your application's base URL (e.g., `https://prominence.orca.tools`)
-- **URL_PATH** → Path to flag dispensations page (e.g., `/jobs/flag-extension-dispensation`)
-- **Result**: Links like `https://prominence.orca.tools/jobs/flag-extension-dispensation/12345` where `12345` is the job_id
-- **When disabled**: Titles appear as plain text (no links)
+**Option 2: Time-based (SCHEDULE_TIMES)**
+- Runs at specific times each day
+- Example: `SCHEDULE_TIMES=09:00,15:00` runs at 9 AM and 3 PM daily
+- Uses 24-hour format (HH:MM)
+- If both are set, SCHEDULE_TIMES takes precedence
 
-**Email Routing**:
-- System extracts domain from vessel email (e.g., `vessel@vsl.prominencemaritime.com` → `prominencemaritime.com`)
-- Matches domain to CC list (e.g., `PROMINENCE_EMAIL_CC_RECIPIENTS`)
-- Falls back to `INTERNAL_RECIPIENTS` if no match found
+#### Timezone Configuration
 
-**Flag Dispensations Specific**:
-- **LOOKBACK_DAYS**: Set to `1` to check jobs created in the last 24 hours
-- **JOB_STATUS**: Set to `for_approval` to only alert on jobs requiring approval
-- Monitors `job_entities` table where `type = 'flag-extension-dispensation'`
+This system uses **two separate timezone settings**:
+
+1. **`SCHEDULE_TIMES_TIMEZONE`** - For scheduler and tracking
+   - Controls when alerts run (if using SCHEDULE_TIMES)
+   - Controls event tracking timestamps
+   - Example: `SCHEDULE_TIMES_TIMEZONE=Europe/Athens` means alerts run at 9:00 Athens time
+
+2. **`TIMEZONE`** - For SQL queries and data display
+   - Controls timezone conversion for database timestamps
+   - Controls timezone shown in email notifications
+   - Example: `TIMEZONE=Europe/Athens` means timestamps display in Athens time
+
+**Typical setup**: Set both to the same timezone (e.g., `Europe/Athens`) for consistency.
+
+#### Email Routing Logic
+
+Emails are routed based on vessel email domain:
+
+```
+Vessel email: knossos@prominencemaritime.com
+→ TO: knossos@prominencemaritime.com
+→ CC: [PROMINENCE_EMAIL_CC_RECIPIENTS] + [INTERNAL_RECIPIENTS]
+
+Vessel email: olympia@seatraders.com
+→ TO: olympia@seatraders.com
+→ CC: [SEATRADERS_EMAIL_CC_RECIPIENTS] + [INTERNAL_RECIPIENTS]
+```
+
+#### Tracking & Reminders
+
+- **`REMINDER_FREQUENCY_DAYS` set**: Events can be re-sent after N days
+  - Example: `REMINDER_FREQUENCY_DAYS=7` allows reminders after 7 days
+  - Older events are automatically cleaned up from tracking file
+  
+- **`REMINDER_FREQUENCY_DAYS` empty/not set**: Events are tracked forever
+  - Each crew contract will only trigger ONE notification ever
+  - Recommended for Masters Navigation Audit (captain only needs one reminder)
+  - Tracking file grows indefinitely (but this is usually fine)
+
+#### Dry-Run Modes
+
+**Mode 1: Dry-run without emails** (`DRY_RUN=True`, `DRY_RUN_EMAIL` empty)
+- No emails sent at all
+- Shows what would be sent in logs
+- Use for: Initial setup, testing configurations
+
+**Mode 2: Dry-run with email redirection** (`DRY_RUN=True`, `DRY_RUN_EMAIL=test@example.com`)
+- Emails redirected to test address
+- CC lists ignored
+- Subject prefixed with `[DRY-RUN]`
+- Use for: Testing email formatting, template rendering
+
+**Mode 3: Production** (`DRY_RUN=False`)
+- Real emails sent to real recipients
+- Use for: Production deployment
 
 ---
 
-## 🎮 Usage
+## Usage
 
-### Command Line Options
+### Running the Application
+
+#### Option 1: Docker (Recommended)
+
+**Start the scheduler**:
 ```bash
-# Dry-run mode (redirects emails to DRY_RUN_EMAIL addresses)
-python -m src.main --dry-run --run-once
+docker-compose up -d
+```
 
-# Run once and exit (sends real emails based on .env DRY_RUN setting)
-python -m src.main --run-once
+**View logs**:
+```bash
+docker-compose logs -f alerts
+```
 
-# Run continuously with scheduling (production mode)
-python -m src.main
+**Stop the scheduler**:
+```bash
+docker-compose down
+```
 
-# Docker equivalent commands
-docker-compose run --rm alerts python -m src.main --dry-run --run-once
+**Restart after config changes**:
+```bash
+docker-compose down
+docker-compose up -d
+```
+
+**Run once and exit** (good for testing):
+```bash
 docker-compose run --rm alerts python -m src.main --run-once
-docker-compose up -d  # Runs continuously
+```
+
+**Run in dry-run mode** (override .env):
+```bash
+docker-compose run --rm alerts python -m src.main --dry-run --run-once
+```
+
+#### Option 2: Local Python
+
+**Activate virtual environment**:
+```bash
+source venv/bin/activate
+```
+
+**Run with scheduling** (continuous mode):
+```bash
+python -m src.main
+```
+
+**Run once and exit**:
+```bash
+python -m src.main --run-once
+```
+
+**Run in dry-run mode**:
+```bash
+python -m src.main --dry-run
+```
+
+**Combine flags**:
+```bash
+python -m src.main --dry-run --run-once
 ```
 
 ### Command-Line Flags
 
-| Flag | Effect | Overrides .env? |
-|------|--------|-----------------|
-| `--dry-run` | Redirects all emails to `DRY_RUN_EMAIL` | Yes - forces dry-run ON |
-| `--run-once` | Executes once and exits (no scheduling) | No |
-| (none) | Runs continuously on schedule | No |
+| Flag | Description | Overrides |
+|------|-------------|-----------|
+| `--dry-run` | Enable dry-run mode (no emails or redirect to test address) | `DRY_RUN` in .env |
+| `--run-once` | Execute once and exit (no scheduling) | `RUN_ONCE` in .env |
 
-### Expected Output (Dry-Run)
-```
-======================================================================
-▶ ALERT SYSTEM STARTING
-======================================================================
-[OK] Configuration validation passed
-======================================================================
-🔒 DRY RUN MODE ACTIVATED - EMAILS REDIRECTED TO: test@company.com
-======================================================================
-[OK] Event tracker initialized
-[OK] Email sender initialized (DRY-RUN MODE - emails redirected)
-[OK] Formatters initialized
-[OK] Registered FlagDispensationsAlert
-============================================================
-▶ RUN-ONCE MODE: Executing alerts once without scheduling
-============================================================
-Running 1 alert(s)...
-Executing alert 1/1...
-============================================================
-▶ FlagDispensationsAlert RUN STARTED
-============================================================
---> Fetching data from database...
-[OK] Fetched 45 record(s)
---> Applying filtering logic...
-[OK] Filtered to 8 entries synced in last 1 day(s)
---> Checking for previously sent notifications...
-[OK] 8 new record(s) to notify
---> Routing notifications to recipients...
-[OK] Created notification job for vessel 'KNOSSOS' (2 job(s))
-[OK] Created notification job for vessel 'MINI' (5 job(s))
-[OK] Created notification job for vessel 'NONDAS' (1 job(s))
-[OK] Created 3 notification job(s)
---> Sending notification 1/3...
-[DRY-RUN-EMAIL] Redirecting to: test@company.com
-[DRY-RUN-EMAIL] Original recipient: knossos@vsl.prominencemaritime.com
-[DRY-RUN-EMAIL] Original CC: user1@prominencemaritime.com, user2@prominencemaritime.com
-[DRY-RUN-EMAIL] Subject: AlertDev | KNOSSOS Flag Extensions-Dispensations
-[OK] Sent notification 1/3
-...
-[OK] Marked 8 job(s) as sent
-◼ FlagDispensationsAlert RUN COMPLETE
+**Priority**: Command-line flags > Environment variables
+
+### Monitoring
+
+**View live logs**:
+```bash
+# Docker
+docker-compose logs -f alerts
+
+# Local
+tail -f logs/alerts.log
 ```
 
-### Production Output
+**Check container status**:
+```bash
+docker-compose ps
 ```
-======================================================================
-▶ ALERT SYSTEM STARTING
-======================================================================
-[OK] Configuration validation passed
-[OK] Event tracker initialized
-[OK] Email sender initialized
-[OK] Formatters initialized
-[OK] Registered FlagDispensationsAlert
-============================================================
-▶ SCHEDULER STARTED
-Frequency: Every 1h
-Timezone: Europe/Athens
-Registered alerts: 1
-============================================================
-[OK] Next run at: 2025-12-01 14:00:00 EET
-Running 1 alert(s)...
-...
-[OK] Sent notification to knossos@vsl.prominencemaritime.com
-[OK] CC: user1@prominencemaritime.com, user2@prominencemaritime.com
-[OK] Marked 8 job(s) as sent
-◼ FlagDispensationsAlert RUN COMPLETE
-[OK] Sleeping for 1h
-[OK] Next run scheduled at: 2025-12-01 15:00:00 EET
+
+**Check container health**:
+```bash
+docker inspect --format='{{.State.Health.Status}}' masters-navigation-audit-app
+```
+
+**View tracking file**:
+```bash
+cat data/sent_alerts.json | jq '.'
 ```
 
 ---
 
-## 🧪 Testing
-
-⚠️ **Note**: The test suite has not yet been updated for the Flag Dispensations alert. The current tests reference the old Passage Plan alert implementation.
+## Testing
 
 ### Running Tests
 
-**Local (requires pytest installed)**:
+**Run all tests**:
 ```bash
-# Run all tests (will have failures due to outdated tests)
-pytest tests/ -v
-
-# Run with coverage
-pytest tests/ --cov=src --cov-report=term --cov-report=html
-
-# Run specific test file
-pytest tests/test_config.py -v
-
-# Run specific test
-pytest tests/test_tracking.py::test_tracker_marks_events_as_sent -v
-```
-
-**Docker (recommended)**:
-```bash
-# Run all tests
+# Docker
 docker-compose run --rm alerts pytest tests/ -v
 
-# Run with coverage
-docker-compose run --rm alerts pytest tests/ --cov=src --cov-report=term
-
-# Interactive shell (run multiple test commands)
-docker-compose run --rm alerts bash
-> pytest tests/ -v
-> pytest tests/test_integration.py -v
-> exit
+# Local
+pytest tests/ -v
 ```
 
-### Test Status
+**Run specific test file**:
+```bash
+pytest tests/test_masters_navigation_audit.py -v
+```
 
-**Tests need updating** - The following test files reference the old alert:
-- `tests/test_passage_plan_alert.py` - Needs renaming and updating for flag dispensations
-- `tests/test_integration.py` - May need updates for new data structure
-- Other test files should work as-is (they test core infrastructure)
+**Run with coverage**:
+```bash
+pytest tests/ --cov=src --cov-report=html
+```
+
+**View coverage report**:
+```bash
+open htmlcov/index.html  # macOS
+xdg-open htmlcov/index.html  # Linux
+```
 
 ### Test Structure
+
 ```
 tests/
-├── conftest.py                    # Shared fixtures and test configuration
-├── test_config.py                 # Configuration loading and validation ✅
-├── test_tracking.py               # Event tracking and duplicate prevention ✅
-├── test_passage_plan_alert.py     # ⚠️ NEEDS UPDATE for flag dispensations
-├── test_formatters.py             # Email HTML/text generation ✅
-├── test_email_sender.py           # Email sending functionality ✅
-├── test_scheduler.py              # Scheduling and execution ✅
-└── test_integration.py            # ⚠️ MAY NEED UPDATE for new workflow
+├── conftest.py                        # Shared fixtures
+├── test_config.py                     # Configuration tests
+├── test_db_utils.py                   # Database connection tests
+├── test_email_sender.py               # Email sending tests
+├── test_formatters.py                 # HTML/text formatting tests
+├── test_integration.py                # End-to-end tests
+├── test_masters_navigation_audit.py   # Masters Navigation Audit alert tests
+├── test_scheduler.py                  # Scheduling tests
+└── test_tracking.py                   # Event tracking tests
 ```
 
-### Writing Tests for Flag Dispensations
+### Manual Testing Checklist
 
-To update the test suite, you'll need to:
+Before deploying to production, verify:
 
-1. **Rename test file**:
-```bash
-mv tests/test_passage_plan_alert.py tests/test_flag_dispensations_alert.py
-```
-
-2. **Update imports and test data**:
-```python
-# tests/test_flag_dispensations_alert.py
-import pytest
-from src.alerts.flag_dispensations_alert import FlagDispensationsAlert
-
-
-@pytest.fixture
-def sample_dataframe():
-    """Sample flag dispensations data."""
-    return pd.DataFrame({
-        'vsl_email': ['vessel@prominencemaritime.com'],
-        'vessel_id': [123],
-        'vessel': ['KNOSSOS'],
-        'job_id': [456],
-        'importance': ['High'],
-        'title': ['Flag Extension Request'],
-        'dispensation_type': ['Extension'],
-        'department': ['Deck'],
-        'due_date': ['2025-12-15'],
-        'requested_on': ['2025-12-01'],
-        'created_at': ['2025-12-01 10:00:00'],
-        'status': ['for_approval']
-    })
-
-
-def test_alert_initializes_correctly(mock_config):
-    """Test that alert initializes with correct configuration."""
-    alert = FlagDispensationsAlert(mock_config)
-    assert alert.sql_query_file == 'FlagDispensations.sql'
-    assert alert.lookback_days == 1
-    assert alert.job_status == 'for_approval'
-
-
-def test_alert_filters_data_correctly(mock_config, sample_dataframe):
-    """Test filtering logic."""
-    alert = FlagDispensationsAlert(mock_config)
-    filtered = alert.filter_data(sample_dataframe)
-    assert len(filtered) > 0
-    assert 'created_at' in filtered.columns
-```
+- [ ] Dry-run completes without errors: `docker-compose run --rm alerts python -m src.main --dry-run --run-once`
+- [ ] SQL query returns expected columns (use query in `queries/MastersNavigationAudit.sql`)
+- [ ] Email recipients configured correctly in `.env`
+- [ ] CC recipients configured correctly per domain
+- [ ] `DRY_RUN=False` in `.env` for production
+- [ ] `DRY_RUN_EMAIL` contains valid test address for dry-run testing
+- [ ] Company logos exist in `media/` directory and display in emails
+- [ ] Link generation works (if `ENABLE_LINKS=True`)
+- [ ] `BASE_URL` and `URL_PATH` configured correctly
+- [ ] `RANK_ID=1` for Masters
+- [ ] Tracking file updates after test run: `cat data/sent_alerts.json`
+- [ ] No duplicates on second dry-run (same crew contracts not resent)
+- [ ] Docker build succeeds: `docker-compose build`
+- [ ] Container starts: `docker-compose up -d`
+- [ ] Container stays running: `docker-compose ps`
+- [ ] Logs show successful execution: `docker-compose logs -f alerts`
+- [ ] Health check passes: `docker inspect --format='{{.State.Health.Status}}' masters-navigation-audit-app`
+- [ ] Email greeting uses correct captain surname
+- [ ] Email displays correct vessel name in subject
 
 ---
 
-## 🔄 Creating New Alert Projects
+## Creating New Alert Projects
 
-The modular design makes it easy to create new alert types. **Recommended approach**: Copy entire project to new directory (one alert per container).
+This project is designed to be easily copied and customized for new alert types. Here's how:
 
-### Step-by-Step Guide
+### Step 1: Copy the Project
 
-#### 1. Copy the Project
 ```bash
 cd ~/Dev
-cp -r flag-dispensations-alerts hot-works-alerts
-cd hot-works-alerts
+cp -r masters-navigation-audit-alerts new-alert-name-alerts
+cd new-alert-name-alerts
 ```
 
-#### 2. Clean Up Old Data
+### Step 2: Update Configuration
+
+1. **Update `.env` file**:
+   - Change `LOOKBACK_DAYS` if needed
+   - Update `RANK_ID` or add new alert-specific parameters
+   - Update `URL_PATH` for new alert type
+   - Keep email routing and other core settings
+
+2. **Update `docker-compose.yml`**:
+   - Change `container_name` to `new-alert-name-app`
+
+### Step 3: Create Alert Implementation
+
+1. **Create new SQL query**: `queries/NewAlertName.sql`
+   ```sql
+   -- Example for hot works alert
+   SELECT
+       event_id,
+       vessel_id,
+       vessel_email,
+       vessel_name,
+       event_title,
+       event_date,
+       created_at
+   FROM events
+   WHERE event_type = 'hot_work'
+     AND created_at >= NOW() - INTERVAL ':lookback_days days'
+   ORDER BY created_at DESC;
+   ```
+
+2. **Create alert class**: `src/alerts/new_alert_name.py`
+   ```python
+   from src.core.base_alert import BaseAlert
+   from src.core.config import AlertConfig
+   
+   class NewAlertNameAlert(BaseAlert):
+       def __init__(self, config: AlertConfig):
+           super().__init__(config)
+           self.sql_query_file = 'NewAlertName.sql'
+       
+       def fetch_data(self) -> pd.DataFrame:
+           # Query database
+           pass
+       
+       def filter_data(self, df: pd.DataFrame) -> pd.DataFrame:
+           # Apply filters
+           pass
+       
+       def route_notifications(self, df: pd.DataFrame) -> List[Dict]:
+           # Route to recipients
+           pass
+       
+       def get_tracking_key(self, row: pd.Series) -> str:
+           # Generate unique key
+           return f"vessel_id_{row['vessel_id']}__event_id_{row['event_id']}"
+       
+       def get_subject_line(self, data: pd.DataFrame, metadata: Dict) -> str:
+           # Generate subject
+           return f"Alert | {metadata['vessel_name']} Hot Works Notification"
+       
+       def get_required_columns(self) -> List[str]:
+           # List required columns
+           return ['event_id', 'vessel_id', 'vessel_email', 'vessel_name']
+   ```
+
+3. **Register alert in `src/main.py`**:
+   ```python
+   from src.alerts.new_alert_name import NewAlertNameAlert
+   
+   def register_alerts(scheduler: AlertScheduler, config: AlertConfig) -> None:
+       # ... existing alerts ...
+       
+       new_alert = NewAlertNameAlert(config)
+       scheduler.register_alert(new_alert.run)
+       logger.info("[OK] Registered NewAlertNameAlert")
+   ```
+
+### Step 4: Test
+
 ```bash
-rm -rf data/*.json logs/*.log
-rm -rf .git  # Optional: start fresh git history
-git init
+# Build
+docker-compose build
 
-# Fix directory permissions for Docker
-sudo chown -R $(id -u):$(id -g) logs/ data/
+# Test dry-run
+docker-compose run --rm alerts python -m src.main --dry-run --run-once
+
+# Deploy
+docker-compose up -d
 ```
 
-**Important**: When copying projects between machines or deploying to servers, always fix directory permissions to match the user that will run Docker. This prevents `PermissionError` on startup.
+### What Stays the Same
 
-#### 3. Update Configuration
+When creating new alert types, you can reuse:
+- ✅ `src/core/` - Configuration, scheduling, tracking, base alert class
+- ✅ `src/notifications/` - Email and Teams senders
+- ✅ `src/formatters/` - HTML and text formatters (or customize if needed)
+- ✅ `src/utils/` - Validation and utility functions
+- ✅ `db_utils.py` - Database connection handling
+- ✅ `.dockerignore`, `Dockerfile`, `requirements.txt`
 
-**Edit `.env`**:
-```bash
-vi .env
-```
+### What Changes
 
-Key changes for new alert type:
-```bash
-# Change schedule (e.g., every 2 hours for hot works)
-SCHEDULE_FREQUENCY_HOURS=2.0
+For each new alert type:
+- ❌ `queries/*.sql` - Custom SQL query for your alert
+- ❌ `src/alerts/*.py` - Alert-specific implementation
+- ❌ `.env` - Alert-specific parameters (LOOKBACK_DAYS, RANK_ID, etc.)
+- ❌ `README.md` - Update for new alert description
+- ❌ `docker-compose.yml` - Update container name
 
-# Change reminder frequency (e.g., weekly reminders)
-REMINDER_FREQUENCY_DAYS=7
+---
 
-# Update recipients for this alert type
-INTERNAL_RECIPIENTS=hotworks-admin@company.com
+## 🐳 Docker Deployment
 
-# Update lookback period
-LOOKBACK_DAYS=7  # Look back 7 days instead of 1
+### Docker Compose Configuration
 
-# Update job status filter if needed
-JOB_STATUS=pending_review
-
-# Update links (if using different URL path)
-URL_PATH=/hot-works
-```
-
-#### 4. Update Docker Configuration
-
-**Edit `docker-compose.yml`**:
 ```yaml
 services:
   alerts:
@@ -653,440 +767,328 @@ services:
       args:
         UID: ${UID}
         GID: ${GID}
-    container_name: hot-works-alerts-app  # ← CHANGE THIS
+    container_name: masters-navigation-audit-app
     env_file:
       - .env
     volumes:
       - ./logs:/app/logs
       - ./data:/app/data
       - ./queries:/app/queries
-      - ~/.ssh/your_key:/app/ssh_key:ro
+      - /Users/username/.ssh/ssh_key:/app/ssh_key:ro
+      - /Users/username/.ssh/ssh_ubuntu_key:/app/ssh_ubuntu_key:ro
     restart: unless-stopped
 ```
 
-#### 5. Create SQL Query
+### Volume Mounts
+
+| Host Path | Container Path | Purpose |
+|-----------|----------------|---------|
+| `./logs` | `/app/logs` | Log files (persistent across restarts) |
+| `./data` | `/app/data` | Tracking file (persistent across restarts) |
+| `./queries` | `/app/queries` | SQL queries (allows updates without rebuild) |
+| `~/.ssh/ssh_key` | `/app/ssh_key` | SSH key for database tunnel (read-only) |
+
+### Health Check
+
+The container includes an automatic health check:
+- Runs every 1 hour
+- Checks if log file was updated recently
+- Container marked unhealthy if logs are stale
+
+**Check health status**:
 ```bash
-rm queries/FlagDispensations.sql
-vi queries/HotWorkPermits.sql
+docker inspect --format='{{.State.Health.Status}}' masters-navigation-audit-app
 ```
 
-**Example query**:
-```sql
-SELECT 
-    v.email AS vsl_email,
-    jv.vessel_id AS vessel_id,
-    v.name AS vessel,
-    jv.job_id as job_id,
-    ji.name as importance,
-    je.title AS title,
-    hwt.name as work_type,
-    d.name AS department,
-    je.due_date AS due_date,
-    je.created_at AS created_at,
-    js.name AS status
-FROM 
-    job_entities je 
-LEFT JOIN job_importances ji ON ji.id = je.importance_id
-LEFT JOIN departments d ON d.id = je.main_department_id
-LEFT JOIN job_statuses js ON js.id = je.status_id
-LEFT JOIN hot_work_types hwt ON hwt.id = je.work_type_id
-LEFT JOIN job_vessels jv ON jv.job_id = je.id
-LEFT JOIN vessels v ON v.id = jv.vessel_id
-WHERE
-    je.type = 'hot-work-permit'
-    AND je.deleted_at IS NULL
-    AND je.archived_at IS NULL
-    AND v.active = 'true'
-    AND je.created_at >= NOW() - INTERVAL '1 day' * :lookback_days
-    AND js.label = :job_status;
-```
+### Container Management
 
-#### 6. Create Alert Implementation
-
-Follow the same pattern as `flag_dispensations_alert.py`, updating:
-- Class name
-- SQL query file name
-- Column names in `get_required_columns()`
-- Display columns in `route_notifications()`
-- Subject line in `get_subject_line()`
-- Tracking key format in `get_tracking_key()`
-
-#### 7. Update Module Imports
-
-**Edit `src/alerts/__init__.py`**:
-```python
-"""Alert implementations."""
-from .hot_works_alert import HotWorksAlert  # ← CHANGE THIS
-
-__all__ = ['HotWorksAlert']  # ← CHANGE THIS
-```
-
-#### 8. Register the Alert
-
-**Edit `src/main.py`**:
-```python
-def register_alerts(scheduler: AlertScheduler, config: AlertConfig) -> None:
-    """Register all alert implementations with the scheduler."""
-    logger = logging.getLogger(__name__)
-    
-    # Register Hot Works Alert
-    from src.alerts.hot_works_alert import HotWorksAlert  # ← CHANGE THIS
-    hot_works_alert = HotWorksAlert(config)  # ← CHANGE THIS
-    scheduler.register_alert(hot_works_alert.run)
-    logger.info("[OK] Registered HotWorksAlert")  # ← CHANGE THIS
-```
-
-#### 9. Test the New Alert
+**View container status**:
 ```bash
-# Test locally (if you have Python setup)
-python -m src.main --dry-run --run-once
-
-# Test in Docker
-export UID=$(id -u) GID=$(id -g)
-docker-compose build --no-cache  # Use --no-cache to avoid module caching issues
-docker-compose run --rm alerts python -m src.main --dry-run --run-once
-```
-
-**Important**: When creating a new alert project from a template, always use `--no-cache` for the first build to avoid Python module caching issues from the old project.
-
-#### 10. Deploy to Production
-```bash
-# Start container
-docker-compose up -d
-
-# Monitor logs
-docker-compose logs -f alerts
-
-# Check status
-docker-compose ps
-
-# View tracking file
-docker-compose exec alerts cat data/sent_alerts.json | jq '.'
-```
-
----
-
-## 🐳 Docker Deployment
-
-### Building the Container
-```bash
-# Set user/group IDs for proper file permissions
-export UID=$(id -u) GID=$(id -g)
-
-# Build the image
-docker-compose build
-```
-
-### Running in Production
-```bash
-# Start in detached mode (background)
-docker-compose up -d
-
-# View logs (follow mode)
-docker-compose logs -f alerts
-
-# View last 100 lines
-docker-compose logs --tail=100 alerts
-
-# Stop the container
-docker-compose down
-
-# Restart after config changes
-docker-compose restart alerts
-
-# View container status
 docker-compose ps
 ```
 
-### Running Tests in Docker
+**View resource usage**:
 ```bash
-# Run all tests (note: some tests need updating)
-docker-compose run --rm alerts pytest tests/ -v
-
-# Run with coverage
-docker-compose run --rm alerts pytest tests/ --cov=src --cov-report=term
-
-# Interactive shell
-docker-compose run --rm alerts bash
+docker stats masters-navigation-audit-app
 ```
 
-### Docker Configuration
-
-**`docker-compose.yml`**:
-```yaml
-services:
-  alerts:
-    build:
-      context: .
-      args:
-        UID: ${UID:-1000}
-        GID: ${GID:-1000}
-    container_name: flag-dispensations-app
-    env_file:
-      - .env
-    environment:
-      SSH_KEY_PATH: /app/ssh_ubuntu_key
-    volumes:
-      - ./logs:/app/logs          # Logs persist on host
-      - ./data:/app/data          # Tracking data persists on host
-      - ./queries:/app/queries    # Mount queries for easy updates
-      - ~/.ssh/your_key:/app/ssh_key:ro  # SSH key (read-only)
-    restart: unless-stopped        # Auto-restart on failure
-```
-
-### Health Monitoring
-
-The Docker container includes a healthcheck that verifies:
-- Log file exists
-- Log file was updated recently (within schedule frequency + 10 minutes)
-
-**View health status**:
+**Execute command in running container**:
 ```bash
-docker inspect --format='{{.State.Health.Status}}' flag-dispensations-app
-
-# Possible values:
-# - healthy: Container is working properly
-# - unhealthy: Container has issues
-# - starting: Health check hasn't completed yet
-```
-
-### Docker Commands Reference
-```bash
-# Build
-export UID=$(id -u) GID=$(id -g)
-docker-compose build
-
-# Build with no cache (use after code updates)
-docker-compose build --no-cache
-
-# Start
-docker-compose up -d
-
-# Stop
-docker-compose down
-
-# Restart
-docker-compose restart alerts
-
-# Logs (live)
-docker-compose logs -f alerts
-
-# Logs (last 100 lines)
-docker-compose logs --tail=100 alerts
-
-# Execute command
-docker-compose exec alerts python -m src.main --run-once
-
-# Shell access
 docker-compose exec alerts bash
-
-# Run tests
-docker-compose run --rm alerts pytest tests/ -v
-
-# Remove everything (including volumes)
-docker-compose down -v
-
-# Complete cache clear and rebuild
-docker-compose down -v && \
-docker images | grep flag-dispensations | awk '{print $3}' | xargs -r docker rmi && \
-docker builder prune -af && \
-docker-compose build --no-cache
 ```
 
----
-
-## 🛠️ Development
-
-### Project Structure
-```
-flag-dispensations-alerts/
-├── .env                          # Configuration (not in git)
-├── .env.example                  # Configuration template
-├── .gitignore                    # Git ignore rules
-├── docker-compose.yml            # Docker configuration
-├── Dockerfile                    # Container definition
-├── requirements.txt              # Python dependencies
-├── pytest.ini                    # Pytest configuration
-├── README.md                     # This file
-│
-├── src/                          # Source code
-│   ├── __init__.py
-│   ├── main.py                   # Entry point
-│   ├── db_utils.py               # Database utilities (SSH tunnel, queries)
-│   │
-│   ├── core/                     # Core infrastructure (reusable)
-│   │   ├── __init__.py
-│   │   ├── base_alert.py         # Abstract base class for alerts
-│   │   ├── config.py             # Configuration management
-│   │   ├── tracking.py           # Event tracking system
-│   │   └── scheduler.py          # Scheduling logic
-│   │
-│   ├── notifications/            # Notification handlers (reusable)
-│   │   ├── __init__.py
-│   │   ├── email_sender.py       # Email sending with SMTP
-│   │   └── teams_sender.py       # Teams integration (stub)
-│   │
-│   ├── formatters/               # Email formatters (reusable)
-│   │   ├── __init__.py
-│   │   ├── html_formatter.py     # Rich HTML emails with responsive design
-│   │   ├── text_formatter.py     # Plain text emails
-│   │   └── date_formatter.py     # Duration formatting utility
-│   │
-│   ├── utils/                    # Utilities (reusable)
-│   │   ├── __init__.py
-│   │   ├── validation.py         # DataFrame validation
-│   │   └── image_utils.py        # Logo loading
-│   │
-│   └── alerts/                   # Alert implementations (customized)
-│       ├── __init__.py
-│       └── flag_dispensations_alert.py  # Current alert
-│
-├── queries/                      # SQL queries (customized)
-│   └── FlagDispensations.sql
-│
-├── media/                        # Company logos
-│   ├── trans_logo_prominence_procreate_small.png
-│   └── trans_logo_seatraders_procreate_small.png
-│
-├── data/                         # Runtime data (not in git)
-│   └── sent_alerts.json          # Tracking file
-│
-├── logs/                         # Log files (not in git)
-│   └── alerts.log
-│
-├── docs/                         # Documentation
-│   └── AlertDev.docx             # Alert specifications
-│
-├── scripts/                      # Utility scripts
-│   ├── email_checker.py          # Email testing utility
-│   └── verify_teams_webhook.py   # Teams webhook testing
-│
-└── tests/                        # Unit tests (⚠️ NEEDS UPDATE)
-    ├── conftest.py               # Shared fixtures
-    ├── test_config.py            # Configuration tests ✅
-    ├── test_tracking.py          # Tracking tests ✅
-    ├── test_passage_plan_alert.py  # ⚠️ Needs renaming/updating
-    ├── test_formatters.py        # Formatter tests ✅
-    ├── test_email_sender.py      # Email sending tests ✅
-    ├── test_scheduler.py         # Scheduler tests ✅
-    └── test_integration.py       # End-to-end tests ⚠️
-```
-
-### Code Quality Standards
-
-**Before committing**:
+**Rebuild after code changes**:
 ```bash
-# Run tests (note: some may fail until updated)
-pytest tests/ -v
-
-# Check coverage
-pytest tests/ --cov=src --cov-report=term
-
-# Format code (if using black)
-black src/ tests/
-
-# Lint code (if using flake8)
-flake8 src/ tests/
+docker-compose down
+docker-compose build --no-cache
+docker-compose up -d
 ```
 
 ---
 
-## 🐛 Troubleshooting
+## Development
+
+### Development Workflow
+
+1. **Make changes** to source code
+2. **Test locally**:
+   ```bash
+   python -m src.main --dry-run --run-once
+   ```
+3. **Run tests**:
+   ```bash
+   pytest tests/ -v
+   ```
+4. **Build Docker image**:
+   ```bash
+   docker-compose build
+   ```
+5. **Test in Docker**:
+   ```bash
+   docker-compose run --rm alerts python -m src.main --dry-run --run-once
+   ```
+6. **Deploy**:
+   ```bash
+   docker-compose up -d
+   ```
+
+### Code Style
+
+This project follows Python best practices:
+- **Type hints** for function signatures
+- **Docstrings** for all classes and methods
+- **Logging** instead of print statements
+- **Error handling** with try/except blocks
+- **Configuration** via environment variables (no hardcoded values)
+
+### Adding New Features
+
+#### Add a new configuration parameter:
+
+1. Add to `.env`:
+   ```bash
+   NEW_PARAMETER=value
+   ```
+
+2. Add to `AlertConfig` dataclass in `src/core/config.py`:
+   ```python
+   @dataclass
+   class AlertConfig:
+       # ... existing fields ...
+       new_parameter: str
+   ```
+
+3. Load in `AlertConfig.from_env()`:
+   ```python
+   return cls(
+       # ... existing params ...
+       new_parameter=config('NEW_PARAMETER', default='default_value'),
+   )
+   ```
+
+4. Access in alerts:
+   ```python
+   value = self.config.new_parameter
+   ```
+
+#### Add a new notification channel:
+
+1. Create sender in `src/notifications/`:
+   ```python
+   # src/notifications/slack_sender.py
+   class SlackSender:
+       def send(self, message: str, channel: str):
+           # Implementation
+           pass
+   ```
+
+2. Add configuration in `AlertConfig`
+3. Initialize in `main.py`
+4. Use in alert implementations
+
+### Debugging Tips
+
+**Enable debug logging**:
+```python
+# In src/main.py setup_logging()
+logger.setLevel(logging.DEBUG)
+```
+
+**Test SQL query manually**:
+```bash
+# Connect to database
+psql -h hostname -U username -d database
+
+# Run query from queries/MastersNavigationAudit.sql
+# Replace :lookback_days and :rank_id with actual values
+```
+
+**Inspect tracking file**:
+```bash
+# Pretty-print JSON
+cat data/sent_alerts.json | jq '.'
+
+# Count tracked events
+cat data/sent_alerts.json | jq '.sent_events | length'
+
+# Find specific crew contract
+cat data/sent_alerts.json | jq '.sent_events | to_entries[] | select(.key | contains("crew_contract_id_123"))'
+```
+
+**Test email formatting**:
+```python
+# In Python REPL
+from src.formatters.html_formatter import HTMLFormatter
+from src.core.config import AlertConfig
+import pandas as pd
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
+config = AlertConfig.from_env()
+formatter = HTMLFormatter()
+
+# Create sample data
+df = pd.DataFrame({
+    'full_name': ['John Smith'],
+    'rank': ['Master'],
+    'sign_on_date': ['2024-01-15 10:00:00'],
+    'due_date': ['2024-01-29']
+})
+
+metadata = {
+    'vessel_name': 'KNOSSOS',
+    'alert_title': "Master's Navigation Audit",
+    'company_name': 'Prominence Maritime S.A.',
+    'display_columns': ['full_name', 'rank', 'sign_on_date', 'due_date']
+}
+
+html = formatter.format(
+    df, 
+    datetime.now(tz=ZoneInfo('Europe/Athens')), 
+    config, 
+    metadata
+)
+
+# Save to file for inspection
+with open('test_email.html', 'w') as f:
+    f.write(html)
+```
+
+---
+
+## Troubleshooting
 
 ### Common Issues
 
-#### 1. "No module named 'src'"
-**Cause**: Running from wrong directory
+#### 1. Database connection fails
 
-**Solution**:
+**Symptoms**: `psycopg2.OperationalError` or "connection refused"
+
+**Causes**:
+- Wrong database credentials
+- Database host not accessible
+- SSH tunnel not working
+- Firewall blocking connection
+
+**Solutions**:
 ```bash
-# Always run from project root
-cd /path/to/flag-dispensations-alerts
+# Test SSH tunnel manually
+ssh -i ~/.ssh/ssh_ubuntu_key username@ssh.host.com
+
+# Test database connection without tunnel
+psql -h db.host.com -U username -d database
+
+# Check .env settings
+grep DB_ .env
+
+# Verify SSH key permissions (must be 600)
+chmod 600 ~/.ssh/ssh_ubuntu_key
+ls -la ~/.ssh/ssh_ubuntu_key
+
+# Test with Python
+python -c "from src.db_utils import get_db_connection; conn = get_db_connection(); print('Success!')"
+```
+
+#### 2. SMTP authentication fails
+
+**Symptoms**: `SMTPAuthenticationError` or "authentication failed"
+
+**Causes**:
+- Wrong SMTP credentials
+- 2FA enabled without app password
+- SMTP server settings incorrect
+
+**Solutions**:
+```bash
+# For Gmail: Enable "Less secure app access" or create app password
+# For Office365: Use app password or OAuth
+
+# Test SMTP manually
+python scripts/email_checker.py
+
+# Check .env settings
+grep SMTP .env
+```
+
+#### 3. No emails sent (even when data exists)
+
+**Causes**:
+- `ENABLE_EMAIL_ALERTS=False`
+- `DRY_RUN=True` with empty `DRY_RUN_EMAIL`
+- All events already tracked
+
+**Solutions**:
+```bash
+# Check feature flags
+grep ENABLE_EMAIL_ALERTS .env
+grep DRY_RUN .env
+
+# Check tracking file
+cat data/sent_alerts.json | jq '.sent_events | length'
+
+# Clear tracking to resend (CAUTION: Will resend everything!)
+rm data/sent_alerts.json
+
+# Or use dry-run to test
 python -m src.main --dry-run --run-once
 ```
 
-#### 2. Emails not sending in production mode
-**Causes**:
-- `DRY_RUN=True` in `.env` (check this first!)
-- SMTP credentials incorrect
-- Gmail blocking "less secure apps"
-- Firewall blocking SMTP port
+#### 4. Wrong timezone in emails
+
+**Symptoms**: Timestamps show incorrect time zone
+
+**Cause**: `TIMEZONE` not set correctly
 
 **Solution**:
 ```bash
-# Check DRY_RUN setting
-grep DRY_RUN .env
+# Set in .env
+TIMEZONE=Europe/Athens
 
-# Check SMTP settings
-grep SMTP .env
-
-# For Gmail: Use App Password (not regular password)
-# 1. Enable 2FA: https://myaccount.google.com/security
-# 2. Generate App Password: https://myaccount.google.com/apppasswords
-# 3. Use App Password in SMTP_PASS
-
-# Test SMTP connection
-telnet smtp.gmail.com 465
+# Verify in Python
+python -c "from zoneinfo import ZoneInfo; import datetime; print(datetime.datetime.now(tz=ZoneInfo('Europe/Athens')))"
 ```
 
-#### 3. "SSH key not found" error
-**Cause**: SSH key path incorrect or not mounted in Docker
+#### 5. Scheduler runs at wrong times
+
+**Symptoms**: Alert runs at unexpected times (when using SCHEDULE_TIMES)
+
+**Cause**: `SCHEDULE_TIMES_TIMEZONE` not set correctly
 
 **Solution**:
 ```bash
-# Check SSH key exists locally
-ls -la ~/.ssh/your_key
+# Set in .env
+SCHEDULE_TIMES_TIMEZONE=Europe/Athens
+SCHEDULE_TIMES=09:00,15:00
 
-# Update docker-compose.yml volume mount
-volumes:
-  - ~/.ssh/your_key:/app/ssh_ubuntu_key:ro  # ← Verify this path
-
-# Update .env
-SSH_KEY_PATH=/app/ssh_ubuntu_key  # Path inside container
+# Verify in logs - should show:
+# "Next run scheduled at: 2024-12-05 09:00:00 EET"
+docker-compose logs -f alerts | grep "Next run"
 ```
 
-#### 4. Database connection fails
-**Causes**:
-- SSH tunnel not working
-- Database credentials incorrect
-- Database not accessible from this host
+#### 6. Permission denied errors (Docker)
 
-**Solution**:
-```bash
-# Test SSH connection
-ssh -i ~/.ssh/your_key user@host
+**Symptoms**: `PermissionError: [Errno 13] Permission denied: '/app/logs/alerts.log'`
 
-# Test SSH tunnel manually
-ssh -i ~/.ssh/your_key -L 5432:localhost:5432 user@host
-
-# Test database connection (in another terminal)
-psql -h localhost -p 5432 -U username -d database_name
-
-# Check .env settings
-grep -E "DB_|SSH_" .env
-```
-
-#### 5. Links not appearing in emails
-**Causes**:
-- `ENABLE_LINKS=False` in `.env`
-- `BASE_URL` or `URL_PATH` not configured correctly
-- `url` column not being added to DataFrame
-
-**Solution**:
-```bash
-# Check link configuration
-grep -E "ENABLE_LINKS|BASE_URL|URL_PATH" .env
-
-# Verify settings
-ENABLE_LINKS=True
-BASE_URL=https://prominence.orca.tools
-URL_PATH=/jobs/flag-extension-dispensation
-
-# Test URL generation
-python -c "from src.core.config import AlertConfig; c = AlertConfig.from_env(); print(c.enable_links, c.base_url, c.url_path)"
-```
-
-#### 6. Permission denied: '/app/logs/alerts.log'
 **Cause**: Docker container doesn't have write permission to mounted volumes
 
 **Solution**:
@@ -1106,6 +1108,7 @@ docker-compose up -d
 ```
 
 #### 7. Tests fail after git pull / Docker caching old modules
+
 **Cause**: Docker is caching old Python bytecode
 
 **Solution**:
@@ -1116,32 +1119,68 @@ docker-compose build --no-cache && \
 docker-compose run --rm alerts pytest tests/ -v
 ```
 
-#### 8. No jobs found when there should be
+#### 8. No crew contracts found when there should be
+
 **Causes**:
-- `JOB_STATUS` doesn't match database values
+- `RANK_ID` doesn't match database values (should be '1' for Masters)
 - `LOOKBACK_DAYS` too short
-- Jobs already tracked in `sent_alerts.json`
+- Crew contracts already tracked in `sent_alerts.json`
+- Sign-on date not within lookback period
 
 **Solution**:
 ```bash
-# Check job status values in database
+# Check rank_id values in database
 # Connect to database and run:
-SELECT DISTINCT js.label 
-FROM job_entities je 
-LEFT JOIN job_statuses js ON js.id = je.status_id 
-WHERE je.type = 'flag-extension-dispensation';
+SELECT DISTINCT rank_id, name 
+FROM crew_contracts cc
+LEFT JOIN crew_ranks cr ON cr.id = cc.rank_id
+WHERE cc.sign_on_date_as_per_office >= NOW() - INTERVAL '7 days';
 
-# Update JOB_STATUS in .env to match
-# Example: for_approval, pending, submitted, etc.
+# Should return: rank_id='1', name='Master'
+
+# Update RANK_ID in .env to match
+RANK_ID=1
 
 # Increase lookback if needed
 LOOKBACK_DAYS=7  # Check last 7 days instead of 1
+
+# Check if sign-on date is recent enough
+SELECT 
+    crew_member_id,
+    sign_on_date_as_per_office,
+    NOW() - sign_on_date_as_per_office as days_ago
+FROM crew_contracts
+WHERE rank_id = '1'
+ORDER BY sign_on_date_as_per_office DESC
+LIMIT 5;
 
 # Clear tracking file to re-send (use cautiously!)
 rm data/sent_alerts.json
 ```
 
+#### 9. Email greeting shows wrong captain name
+
+**Symptoms**: Email says "Dear Captain [Wrong Name]" or no greeting at all
+
+**Cause**: `surname` column not in database results or contains NULL values
+
+**Solution**:
+```bash
+# Check SQL query includes surname
+cat queries/MastersNavigationAudit.sql | grep surname
+
+# Should contain:
+# p.last_name AS surname
+
+# Verify data in database
+psql -h hostname -U username -d database -c \
+  "SELECT p.last_name AS surname FROM crew_contracts cc \
+   LEFT JOIN parties p ON p.id = cc.crew_member_id \
+   WHERE cc.rank_id = '1' LIMIT 5;"
+```
+
 ### Logging & Debugging
+
 ```bash
 # View live logs (local)
 tail -f logs/alerts.log
@@ -1161,11 +1200,14 @@ grep "KNOSSOS" logs/alerts.log
 # Check tracking file
 cat data/sent_alerts.json | jq '.'
 
-# Count tracked jobs
+# Count tracked crew contracts
 cat data/sent_alerts.json | jq '.sent_events | length'
 
-# Find specific job in tracking
-cat data/sent_alerts.json | jq '.sent_events[] | select(.tracking_key | contains("job_id_456"))'
+# Find specific crew contract in tracking
+cat data/sent_alerts.json | jq '.sent_events | to_entries[] | select(.key | contains("crew_contract_id_123"))'
+
+# Find all crew contracts for a vessel
+cat data/sent_alerts.json | jq '.sent_events | to_entries[] | select(.key | contains("knossos"))'
 ```
 
 ### Testing Checklist
@@ -1181,65 +1223,75 @@ Before deploying to production:
 - [ ] Company logos exist in `media/` directory
 - [ ] Link generation works (if `ENABLE_LINKS=True`)
 - [ ] `BASE_URL` and `URL_PATH` configured correctly
-- [ ] `JOB_STATUS` matches database values
+- [ ] `RANK_ID=1` for Masters
+- [ ] Both timezone settings configured: `TIMEZONE` and `SCHEDULE_TIMES_TIMEZONE`
 - [ ] Tracking file updates after test run: `cat data/sent_alerts.json`
 - [ ] No duplicates on second dry-run
 - [ ] Docker build succeeds: `docker-compose build`
 - [ ] Container starts: `docker-compose up -d`
 - [ ] Container stays running: `docker-compose ps`
 - [ ] Logs show successful execution: `docker-compose logs -f alerts`
-- [ ] Health check passes: `docker inspect --format='{{.State.Health.Status}}' flag-dispensations-app`
+- [ ] Health check passes: `docker inspect --format='{{.State.Health.Status}}' masters-navigation-audit-app`
 
 ---
 
-## 📚 Key Concepts
+## Key Concepts
 
 ### Alert Workflow
 
 ```
-1. Scheduler triggers alert run (every 1 hour)
+1. Scheduler triggers alert run (based on SCHEDULE_FREQUENCY_HOURS or SCHEDULE_TIMES)
    ↓
-2. fetch_data() - Query database for flag dispensation jobs
-   - WHERE type = 'flag-extension-dispensation'
-   - AND status = 'for_approval'
-   - AND created_at >= NOW() - 1 day
+2. fetch_data() - Query database for Masters who recently signed on
+   - WHERE rank_id = '1' (Master)
+   - AND sign_on_date >= NOW() - LOOKBACK_DAYS
+   - AND NOW() >= sign_on_date + 1 day (at least 1 day has passed)
    ↓
 3. filter_data() - Apply timezone conversion and date formatting
    ↓
-4. Check tracking - Skip already-sent jobs
+4. Check tracking - Skip already-sent crew contracts
    ↓
-5. route_notifications() - Group by vessel, add URLs, create email jobs
+5. route_notifications() - Group by vessel, add captain greeting, create email jobs
    ↓
-6. Send emails - One email per vessel with job details
+6. Send emails - One email per vessel with crew contract details
    ↓
-7. Update tracking - Mark jobs as sent
+7. Update tracking - Mark crew contracts as sent
 ```
 
 ### Tracking Key Format
 
 ```python
 def get_tracking_key(self, row: pd.Series) -> str:
-    vessel_id = row['vessel_id']
-    job_id = row['job_id']
+    vessel = row['vessel']
+    crew_contract_id = row['crew_contract_id']
+    crew_member_id = row['crew_member_id']
     
-    return f"vessel_id_{vessel_id}__job_id_{job_id}"
+    return f"{vessel.lower()}__crew_contract_id_{crew_contract_id}__crew_member_id_{crew_member_id}"
 
-# Example: "vessel_id_123__job_id_456"
+# Example: "knossos__crew_contract_id_456__crew_member_id_123"
 ```
+
+This ensures uniqueness across:
+- Different vessels (knossos vs olympia)
+- Different crew contracts (456 vs 789)
+- Different crew members (123 vs 456)
 
 ### Email Content
 
-**Subject**: `AlertDev | KNOSSOS Flag Extensions-Dispensations`
+**Subject**: `AlertDev | KNOSSOS Master's Navigation Audit`
 
-**Body** (responsive HTML table):
-- **Title** (clickable link to job) - `https://prominence.orca.tools/jobs/flag-extension-dispensation/456`
-- **Type** - Dispensation type (Extension, Dispensation, etc.)
-- **Department** - Department name
-- **Requested On** - Date job was requested
-- **Due Date** - Job due date
-- **Created At** - When job was created in system
+**Body** includes:
+- **Personalized greeting**: "Dear Captain [Surname],"
+- **Requirements reminder**: F.NAV.13, F.MLC.1, Crew List due within 14 days
+- **Responsive HTML table** with:
+  - **Full Name** - Captain's full name
+  - **Rank** - Should always be "Master"
+  - **Sign On Date** - When captain signed on (YYYY-MM-DD HH:MM:SS)
+  - **Due Date** - 14 days after sign-on (YYYY-MM-DD)
+- **Company branding**: Logos for Prominence and/or Seatraders
 
 ### Configuration Flow
+
 ```
 .env file
   ↓
@@ -1254,9 +1306,99 @@ Passed to all components (alerts, formatters, senders)
 Accessed via self.config throughout application
 ```
 
+### Timezone Handling
+
+**Two timezone settings work together**:
+
+1. **Data/Display Timezone (`TIMEZONE`)**:
+   - Used in SQL queries for datetime filtering
+   - Used for displaying timestamps in emails
+   - Converts database UTC timestamps to local time
+   - Example: Database has `2024-01-15 08:00:00 UTC`, displays as `2024-01-15 10:00:00 EET`
+
+2. **Scheduler Timezone (`SCHEDULE_TIMES_TIMEZONE`)**:
+   - Used for time-based scheduling (SCHEDULE_TIMES)
+   - Used for event tracking timestamps
+   - Example: `SCHEDULE_TIMES=09:00` with `SCHEDULE_TIMES_TIMEZONE=Europe/Athens` runs at 9 AM Athens time
+
+**Why separate?**
+- Allows scheduling in one timezone while displaying data in another
+- Most users will set both to the same value
+- Example use case: Schedule alerts in UTC but display timestamps in local time
+
 ---
 
-## 📞 Support
+## Project Structure
+
+```
+masters-navigation-audit-alerts/
+├── data/                           # Persistent data (gitignored)
+│   └── sent_alerts.json           # Tracking file for sent notifications
+├── docs/                           # Documentation
+│   ├── AlertDev.docx              # Development documentation
+│   └── example.pdf                # Example outputs
+├── logs/                           # Log files (gitignored)
+│   └── alerts.log                 # Application logs
+├── media/                          # Static assets
+│   ├── trans_logo_prominence_procreate_small.png
+│   └── trans_logo_seatraders_procreate_small.png
+├── queries/                        # SQL query files
+│   └── MastersNavigationAudit.sql # Main SQL query
+├── scripts/                        # Utility scripts
+│   ├── email_checker.py           # Test SMTP connection
+│   └── verify_teams_webhook.py    # Test Teams webhook
+├── src/                            # Source code
+│   ├── alerts/                     # Alert implementations
+│   │   ├── __init__.py
+│   │   └── masters_navigation_audit.py  # Masters Navigation Audit alert
+│   ├── core/                       # Core infrastructure
+│   │   ├── __init__.py
+│   │   ├── base_alert.py          # Abstract base class for alerts
+│   │   ├── config.py              # Configuration management
+│   │   ├── scheduler.py           # Scheduling system
+│   │   └── tracking.py            # Event tracking system
+│   ├── formatters/                 # Email formatters
+│   │   ├── __init__.py
+│   │   ├── date_formatter.py      # Date/time formatting utilities
+│   │   ├── html_formatter.py      # HTML email templates
+│   │   └── text_formatter.py      # Plain text email templates
+│   ├── notifications/              # Notification handlers
+│   │   ├── __init__.py
+│   │   ├── email_sender.py        # Email sending via SMTP
+│   │   └── teams_sender.py        # Teams notifications (planned)
+│   ├── utils/                      # Utilities
+│   │   ├── __init__.py
+│   │   ├── image_utils.py         # Image loading for emails
+│   │   └── validation.py          # Data validation
+│   ├── __init__.py
+│   ├── db_utils.py                # Database connection utilities
+│   └── main.py                    # Application entry point
+├── tests/                          # Test suite
+│   ├── __init__.py
+│   ├── conftest.py                # Shared test fixtures
+│   ├── test_config.py             # Configuration tests
+│   ├── test_db_utils.py           # Database tests
+│   ├── test_email_sender.py       # Email sending tests
+│   ├── test_formatters.py         # Formatting tests
+│   ├── test_integration.py        # End-to-end tests
+│   ├── test_masters_navigation_audit.py  # Alert-specific tests
+│   ├── test_scheduler.py          # Scheduling tests
+│   └── test_tracking.py           # Tracking tests
+├── .dockerignore                   # Docker ignore rules
+├── .env                            # Environment variables (gitignored)
+├── .env.example                    # Example environment configuration
+├── .gitignore                      # Git ignore rules
+├── docker-compose.yml              # Docker Compose configuration
+├── Dockerfile                      # Docker image definition
+├── pytest.ini                      # Pytest configuration
+├── README.md                       # This file
+├── requirements-dev.txt            # Development dependencies
+└── requirements.txt                # Production dependencies
+```
+
+---
+
+## Support
 
 For questions or issues:
 
@@ -1264,23 +1406,24 @@ For questions or issues:
 2. **Review logs**: `docker-compose logs -f alerts`
 3. **Test in dry-run**: `docker-compose run --rm alerts python -m src.main --dry-run --run-once`
 4. **Check tracking file**: `cat data/sent_alerts.json | jq '.'`
-5. **Verify database query**: Run `queries/FlagDispensations.sql` manually
+5. **Verify database query**: Run `queries/MastersNavigationAudit.sql` manually
 6. **Contact**: data@prominencemaritime.com
 
 ---
 
-## 📄 License
+## License
 
 Proprietary - Prominence Maritime / Seatraders
 
 ---
 
-## 🎉 Quick Start Summary
+## Quick Start Summary
+
 ```bash
 # 1. Copy/clone project
 cd ~/Dev
-git clone <repository> flag-dispensations-alerts
-cd flag-dispensations-alerts
+git clone <repository> masters-navigation-audit-alerts
+cd masters-navigation-audit-alerts
 
 # 2. Configure
 cp .env.example .env
@@ -1301,39 +1444,22 @@ docker-compose up -d
 docker-compose logs -f alerts
 
 # 7. Check health
-docker inspect --format='{{.State.Health.Status}}' flag-dispensations-app
+docker inspect --format='{{.State.Health.Status}}' masters-navigation-audit-app
 ```
 
-**That's it! You now have a production-ready flag dispensations alert system.** 🚀
+**That's it! You now have a production-ready Master's Navigation Audit alert system.** 🚀
 
 ---
 
-## 📖 Additional Resources
+## Additional Resources
 
 - **Python decouple docs**: https://pypi.org/project/python-decouple/
 - **Pandas documentation**: https://pandas.pydata.org/docs/
 - **Docker Compose docs**: https://docs.docker.com/compose/
 - **Pytest documentation**: https://docs.pytest.org/
 - **SSH tunnel guide**: https://www.ssh.com/academy/ssh/tunneling
+- **ZoneInfo timezone database**: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 
 ---
 
 *Last updated: December 2025*
-```
-
-## Summary of Changes
-
-The major updates to the README include:
-
-1. **Project name** changed from "Passage Plan" to "Flag Dispensations"
-2. **Alert description** updated to reflect flag extension/dispensation jobs monitoring
-3. **Database details** updated: `job_entities` table, `type='flag-extension-dispensation'`, `status='for_approval'`
-4. **SQL query reference** changed from `PassagePlan.sql` to `FlagDispensations.sql`
-5. **Alert class references** changed from `PassagePlanAlert` to `FlagDispensationsAlert`
-6. **URL path** updated to `/jobs/flag-extension-dispensation/`
-7. **Schedule frequency** changed from 30 minutes to 1 hour
-8. **Job-specific terminology** throughout (jobs instead of events, dispensations instead of passage plans)
-9. **Added warning** about tests needing updates
-10. **Email body columns** updated to match flag dispensations spec (Title, Type, Department, Requested On, Due Date, Created At)
-11. **Configuration section** added `JOB_STATUS` parameter explanation
-12. **Troubleshooting section** added issue #8 for job status mismatch
