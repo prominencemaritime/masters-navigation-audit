@@ -29,6 +29,8 @@ logs/*.log
 # Data (if sensitive)
 data/*.csv
 !data/.gitkeep
+data/*.json
+*.json
 
 # Mac
 .DS_Store
