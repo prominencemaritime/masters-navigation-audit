@@ -208,7 +208,7 @@ class MastersNavigationAuditAlert(BaseAlert):
                         'vessel_id': vessel_df['vessel_id'].iloc[0],
                         'vessel_name': vessel,
                         'surname': vessel_df['surname'].iloc[0],
-                        'alert_title': "Master's Navigation Audit",
+                        'alert_title': "Master's NAV Audit & MLC Inspection",
                         'company_name': self._get_company_name(vsl_email),
                         'display_columns': display_columns
                     }
@@ -316,7 +316,7 @@ class MastersNavigationAuditAlert(BaseAlert):
             Email subject string
         """
         vessel = metadata.get('vessel_name', 'Vessel')
-        return f"AlertDev | {vessel.upper()} Master's Navigation Audit"
+        return f"AlertDev | {vessel.upper()} Master's NAV Audit & MLC Inspection"
 
 
     def get_required_columns(self) -> List[str]:
