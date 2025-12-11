@@ -142,6 +142,26 @@ def register_alerts(scheduler: AlertScheduler, config: AlertConfig) -> None:
     # logger.info("[OK] Registered HotWorksAlert")
 
 
+def write_health_status(config: AlertConfig) -> None:
+    """
+    Write health status to file for Docker healthcheck.
+
+    Args:
+        config: AlertConfig instance
+    """
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+
+    health_file = config.logs_dir / 'health_status.txt'
+    timestamp = datetime.now(tz=ZoneInfo(config.timezone)).isoformat()
+
+    try:
+        health_file.write_text(f"OK {timestamp}\n")
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error(f"Failed to write health status: {e}")
+
+
 def main():
     """Main execution function."""
     from decouple import config as env_config
@@ -210,7 +230,8 @@ def main():
             frequency_hours=config.schedule_frequency_hours,
             timezone=config.timezone,
             schedule_times_timezone=config.schedule_times_timezone,
-            schedule_times=config.schedule_times
+            schedule_times=config.schedule_times,
+            logs_dir=config.logs_dir
         )
         
         # Register all alerts
@@ -219,6 +240,7 @@ def main():
         # Run based on mode
         if run_once_mode:
             scheduler.run_once()
+            write_health_status(config)
         else:
             # Choose scheduling mode based on configuration
             if config.schedule_times:

@@ -168,12 +168,12 @@ def test_alert_generates_correct_subject_lines(mock_config, sample_dataframe):
     # Single record
     single_df = sample_dataframe.iloc[:1]
     subject_single = alert.get_subject_line(single_df, {'vessel': 'VESSEL'})
-    assert subject_single == "AlertDev | VESSEL Master's Navigation Audit"
+    assert subject_single == "AlertDev | VESSEL Master's NAV Audit & MLC Inspection"
     
     # Multiple records (same subject format regardless of count)
     multi_df = sample_dataframe.iloc[:3]
     subject_multi = alert.get_subject_line(multi_df, {'vessel': 'VESSEL'})
-    assert subject_multi == "AlertDev | VESSEL Master's Navigation Audit"
+    assert subject_multi == "AlertDev | VESSEL Master's NAV Audit & MLC Inspection"
 
 
 def test_alert_generates_correct_tracking_keys(mock_config, sample_dataframe):
@@ -448,8 +448,8 @@ def test_alert_filter_replaces_null_values(mock_config):
         'surname': [None],  # Null
         'full_name': ['John Smith'],
         'rank': [None],  # Null
-        'sign_on_date': ['2025-12-01'],
-        'due_date': ['2025-12-15'],
+        'sign_on_date': [datetime.now() - timedelta(days=1)],
+        'due_date': [(datetime.now() - timedelta(days=1) + timedelta(days=14)).date()],
     })
     
     alert = MastersNavigationAuditAlert(mock_config)

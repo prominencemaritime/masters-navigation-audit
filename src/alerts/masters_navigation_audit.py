@@ -88,6 +88,9 @@ class MastersNavigationAuditAlert(BaseAlert):
         if df.empty:
             return df
 
+        # Handle null values before date processing
+        df = df.fillna({'surname': '', 'rank': ''})
+
         # Timezone awareness
         df['sign_on_date'] = pd.to_datetime(df['sign_on_date'])
 

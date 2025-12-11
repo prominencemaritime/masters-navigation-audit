@@ -167,13 +167,13 @@ def test_alert_generates_correct_subject_lines(mock_config, sample_dataframe):
     
     # Single record
     single_df = sample_dataframe.iloc[:1]
-    subject_single = alert.get_subject_line(single_df, {'vessel': 'TEST VESSEL'})
-    assert subject_single == "AlertDev | TEST VESSEL Master's Navigation Audit"
+    subject_single = alert.get_subject_line(single_df, {'vessel_name': 'TEST VESSEL'})
+    assert subject_single == "AlertDev | TEST VESSEL Master's NAV Audit & MLC Inspection"
     
     # Multiple records (same subject format regardless of count)
     multi_df = sample_dataframe.iloc[:3]
     subject_multi = alert.get_subject_line(multi_df, {'vessel': 'VESSEL'})
-    assert subject_multi == "AlertDev | VESSEL Master's Navigation Audit"
+    assert subject_multi == "AlertDev | VESSEL Master's NAV Audit & MLC Inspection"
 
 
 def test_alert_generates_correct_tracking_keys(mock_config, sample_dataframe):
@@ -464,7 +464,7 @@ def test_alert_filter_replaces_null_values(mock_config):
         'surname': [None],  # Null
         'full_name': ['John Smith'],
         'rank': [None],  # Null
-        'sign_on_date': ['2025-12-01'],
+        'sign_on_date': [datetime.now().strftime('%Y-%m-%d')],
         'due_date': ['2025-12-15'],
     })
     
@@ -843,7 +843,7 @@ def test_alert_metadata_includes_vessel_info(mock_read_sql, mock_get_db, mock_co
         assert 'display_columns' in metadata
         
         # Alert title should be correct
-        assert metadata['alert_title'] == "Master's Navigation Audit"
+        assert metadata['alert_title'] == "Master's NAV Audit & MLC Inspection"
         
         # Vessel name should match one from sample data
         assert metadata['vessel_name'] in ['VESSEL', 'OTHER VESSEL']

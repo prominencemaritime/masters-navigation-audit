@@ -10,6 +10,7 @@ import logging
 from datetime import datetime, timedelta, time
 from src.formatters.date_formatter import duration_hours
 from zoneinfo import ZoneInfo
+from pathlib import Path
 from typing import Callable, List
 import pandas as pd
 
@@ -23,7 +24,7 @@ class AlertScheduler:
     Supports graceful shutdown, multiple alerts, and error recovery.
     """
     
-    def __init__(self, frequency_hours: float, timezone: str, schedule_times_timezone: str = 'Europe/Athens', schedule_times: List[str] = None):
+    def __init__(self, frequency_hours: float, timezone: str, schedule_times_timezone: str = 'Europe/Athens', schedule_times: List[str] = None, logs_dir: Path = None):
         """
         Initialize scheduler.
         
@@ -36,6 +37,7 @@ class AlertScheduler:
         self.schedule_times = schedule_times
         self.schedule_times_timezone = ZoneInfo(schedule_times_timezone)
         self.timezone = ZoneInfo(timezone)
+        self.logs_dir = logs_dir or Path('/app/logs')
         self.shutdown_event = threading.Event()
         self._alerts: List[Callable] = []
         
@@ -57,6 +59,19 @@ class AlertScheduler:
         """
         self._alerts.append(alert_runner)
         logger.info(f"Registered alert: {alert_runner.__name__ if hasattr(alert_runner, '__name__') else 'anonymous'}")
+
+    def _write_health_status(self, logs_dir: Path, timezone: ZoneInfo) -> None:
+        """Write health status to file for Docker healthcheck."""
+        from datetime import datetime
+
+        health_file = logs_dir / 'health_status.txt'
+        timestamp = datetime.now(tz=timezone).isoformat()
+
+        try:
+            health_file.write_text(f"OK {timestamp}\n")
+            logger.debug(f"Health status written: {timestamp}")
+        except Exception as e:
+            logger.error(f"Failed to write health status: {e}")
     
     def _run_all_alerts(self) -> None:
         """Execute all registered alerts."""
@@ -77,6 +92,9 @@ class AlertScheduler:
             except Exception as e:
                 logger.exception(f"Error executing alert {idx}: {e}")
                 # Continue with next alert despite error
+
+        # Write health status after all alerts complete
+        self._write_health_status(self.logs_dir, self.timezone)
     
 
     def _calculate_next_run_time(self, current_time: datetime) -> datetime:
