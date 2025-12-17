@@ -306,22 +306,37 @@ class BaseAlert(ABC):
         """
         Write health status to file for healthcheck monitoring.
 
+        Creates a structured health status file with status, timestamp, alert type,
+        and timezone information. Uses atomic write to prevent partial file writes.
+
         Args:
             status: "OK" or "ERROR"
-            run_time: Timestamp of this run
-            error_msg: Error message if status is ERROR
+            run_time: Timezone-aware datetime of this run
+            error_msg: Error message if status is ERROR (optional)
+
+        File format:
+            Line 1: STATUS YYYY-MM-DDTHH:MM:SS.ffffff+HH:MM
+            Line 2: ALERT_TYPE: ClassName
+            Line 3: TIMEZONE: timezone_name
+            Line 4: ERROR_MSG: message (only if status is ERROR)
         """
         try:
             health_file = Path("/app/logs/health_status.txt")
             health_file.parent.mkdir(parents=True, exist_ok=True)
 
-            with open(health_file, 'w') as f:
+            # Use temporary file for atomic write
+            temp_file = health_file.with_suffix('.tmp')
+
+            with open(temp_file, 'w') as f:
                 f.write(f"{status} {run_time.isoformat()}\n")
                 f.write(f"ALERT_TYPE: {self.__class__.__name__}\n")
                 f.write(f"TIMEZONE: {self.config.timezone}\n")
                 if error_msg:
                     f.write(f"ERROR_MSG: {error_msg}\n")
 
-            self.logger.debug(f"Health status written: {status}")
+            # Atomic rename
+            temp_file.replace(health_file)
+
+            self.logger.debug(f"Health status written: {status} at {run_time.isoformat()}")
         except Exception as e:
             self.logger.error(f"Failed to write health status: {e}")
