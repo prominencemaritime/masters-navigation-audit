@@ -206,7 +206,7 @@ class AlertConfig:
     @staticmethod
     def _parse_schedule_times() -> Optional[List[str]]:
         """
-        Parse comma-separated schedule times from environment variable.
+        Parse comma-separated schedule times (in 24-hour format) from environment variable.
 
         Returns:
             List of times in HH:MM format, or None if not configured
