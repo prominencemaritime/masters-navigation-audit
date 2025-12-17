@@ -39,9 +39,11 @@ def main():
     """
     health_file = Path("/app/logs/health_status.txt")
 
-    # Check if health file exists
-    if not health_file.exists():
-        print("Health status file not found", file=sys.stderr)
+    # Validate file structure first
+    try:
+        validate_health_file_structure(health_file)
+    except Exception as e:
+        print(f"Health file validation failed: {e}", file=sys.stderr)
         sys.exit(1)
 
     # Read and parse health status
@@ -208,6 +210,25 @@ def get_effective_timezone() -> str:
         return general_tz
     
     return 'UTC'
+
+
+def validate_health_file_structure(health_file: Path) -> None:
+    """
+    Perform initial validation of health file structure before parsing.
+
+    Raises:
+        FileNotFoundError: If file doesn't exist
+        ValueError: If file is empty or has invalid structure
+    """
+    if not health_file.exists():
+        raise FileNotFoundError(f"Health file not found: {health_file}")
+
+    stat = health_file.stat()
+    if stat.st_size == 0:
+        raise ValueError("Health file is empty")
+
+    if stat.st_size > 10000:  # 10KB limit
+        raise ValueError(f"Health file is too large: {stat.st_size} bytes (max 10KB)")
 
 
 def calculate_max_age() -> float:

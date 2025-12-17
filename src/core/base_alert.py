@@ -334,8 +334,16 @@ class BaseAlert(ABC):
                 if error_msg:
                     f.write(f"ERROR_MSG: {error_msg}\n")
 
+            # Verify file was written correctly
+            if not temp_file.exists() or temp_file.stat().st_size == 0:
+                raise IOError("Temporary health file is empty after write")
+
             # Atomic rename
             temp_file.replace(health_file)
+
+            # Verify final file
+            if not health_file.exists() or health_file.stat().st_size == 0:
+                raise IOError("Health file is empty after rename")
 
             self.logger.debug(f"Health status written: {status} at {run_time.isoformat()}")
         except Exception as e:
