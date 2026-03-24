@@ -172,6 +172,15 @@ class MastersNavigationAuditAlert(BaseAlert):
         """
         self.logger.info(f"route_notifications() called with {len(df)} record(s) across {df['vsl_email'].nunique()} vessel(s)")
         jobs = []
+    
+        # Check if vsl_email is empty and log warning if so
+        missing_email = df[df['vsl_email'].isna() | (df['vsl_email'] == '')]
+        if not missing_email.empty:
+            self.logger.warning(
+                f"Skipping {len(missing_email)} record(s) with no vsl_email: "
+                f"{missing_email['vessel'].tolist()}"
+            )
+        df = df[df['vsl_email'].notna() & (df['vsl_email'] != '')]
 
         # Group by vessel
         grouped = df.groupby(['vsl_email', 'vessel'])
