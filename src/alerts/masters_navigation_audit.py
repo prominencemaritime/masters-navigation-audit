@@ -170,14 +170,21 @@ class MastersNavigationAuditAlert(BaseAlert):
         Returns:
             List of notification job dictionaries
         """
+        self.logger.info(f"route_notifications() called with {len(df)} record(s) across {df['vsl_email'].nunique()} vessel(s)")
         jobs = []
 
         # Group by vessel
         grouped = df.groupby(['vsl_email', 'vessel'])
+        self.logger.info(f"Grouped into {len(grouped)} vessel group(s): {list(grouped.groups.keys())}")
 
         for (vsl_email, vessel), vessel_df in grouped:
+            self.logger.info(f"Processing vessel '{vessel}' ({vsl_email}): {len(vessel_df)} record(s)")
             # Determine cc recipients
             cc_recipients = self._get_cc_recipients(vsl_email)
+            if not cc_recipients:
+                self.logger.warning(f"No CC recipients resolved for {vsl_email} -- job will be created with empty CC list")
+            else:
+                self.logger.info(f"Resolved {len(cc_recipients)} CC recipient(s) for {vsl_email}: {cc_recipients}")
 
             # Add URLs to dataframe if ENABLE_LINKS
             if self.config.enable_links:
@@ -215,6 +222,8 @@ class MastersNavigationAuditAlert(BaseAlert):
             }
 
             jobs.append(job)
+            if not jobs:
+                self.logger.warning(f"route_notifications() produced 0 jobs from {len(df)} input record(s) -- all records were silently dropped")
 
             self.logger.info(
                     f"Created notification for vessel '{vessel}' "
